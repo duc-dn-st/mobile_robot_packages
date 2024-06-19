@@ -39,7 +39,7 @@ class EulerGenerator:
 
         self._model = model
 
-        self._epsilon_max = 0.153281
+        self._epsilon_max = 0.21425
 
         self._lc_scale = 0.4
 
@@ -59,6 +59,8 @@ class EulerGenerator:
 
         waypoints = self._convert_to_numpy(initial_paths)
 
+        previous_end_corner = initial_paths[0]
+        
         for index in range(number_of_corner):
             start = waypoints[index]
 
@@ -82,11 +84,13 @@ class EulerGenerator:
 
             time = 2 * s_mid / path_velocity_corner
 
-            start = initial_paths[index] if index == 0 else end_corner
+            start = initial_paths[index] if index == 0 else previous_end_corner
         
             end = initial_paths[index] if index == len(initial_paths) - 1 else start_corner
 
-            position = self._interpolate_euler_spiral(start_corner, path_velocity_corner, time, a_euler, turn_direction, start, end)
+            previous_end_corner = end_corner
+
+            position = self._interpolate(start_corner, path_velocity_corner, time, a_euler, turn_direction, start, end)
 
             trajectory.extend(position)
 
@@ -95,7 +99,7 @@ class EulerGenerator:
     # ==================================================================================================
     # PRIVATE METHODS
     # ==================================================================================================
-    def _interpolate_euler_spiral(self, start_corner, path_velocity_corner, time, a_euler, turn_direction, start, end):
+    def _interpolate(self, start_corner, path_velocity_corner, time, a_euler, turn_direction, start, end):
         """! Interpolate the Euler spiral path
         @param start_corner<np.array>: The start corner
         @param path_velocity_corner<float>: The path velocity corner
@@ -108,9 +112,8 @@ class EulerGenerator:
         """
         # if index > number_of_line - 1: 
         #     return position
-
         theta_start = self._calculate_angle_from_vectors(start, end)
-        print(theta_start)
+
         rotation_matrix = np.array([[math.cos(theta_start), -math.sin(theta_start)], [math.sin(theta_start), math.cos(theta_start)]])
 
         arc_length_mid = path_velocity_corner * (1.0 / 2) * time
@@ -237,6 +240,9 @@ class EulerGenerator:
         return unit
 
     def _generate_coefficient(self):
+        """! Generate the coefficient
+        @return The coefficient for the Euler spiral using Taylor series expansion.
+        """
         self._euler_table = np.zeros((self._n, 2))
 
         for i in range(self._n):

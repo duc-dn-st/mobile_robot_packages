@@ -6,6 +6,9 @@ import matplotlib.pyplot as plt
 
 sys.path.append(os.path.join("..",".."))
 
+# Standard library
+import time
+
 # Internal library
 from models.differential_drive import DifferentialDrive
 from trajectory_generators.euler_generator import EulerGenerator
@@ -15,13 +18,17 @@ if __name__ == "__main__":
 
     trajectory_generator = EulerGenerator(differential_drive)
 
-    initial_paths = [(1.0, 1.0), (3.0, 7.0), (8.0, 8.0), (10.0, 10.0)]
+    initial_paths = [(1.0, 1.0), (3.0, 7.0), (8.0, 8.0), (9.0, 5.0), (10.0, 10.0)]
+
+    start_time = time.time()
 
     position = [initial_paths[0]]
 
     position.extend(trajectory_generator.generate(initial_paths))
 
     position.append(initial_paths[-1])
+
+    print("Execution time: ", time.time() - start_time)
 
     figure, ax = plt.subplots()
 
