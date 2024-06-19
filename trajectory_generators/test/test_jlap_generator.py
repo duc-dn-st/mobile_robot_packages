@@ -8,18 +8,14 @@ sys.path.append(os.path.join("..",".."))
 
 # Internal library
 from trajectory_generators.jlap_generator import JlapGenerator
-from environments.graph import Graph
 
 
 if __name__ == "__main__":
-    environment = Graph()
 
-    trajectory_generator = JlapGenerator(environment)
+    trajectory_generator = JlapGenerator()
 
-    start = (1.0, 1.0)
+    initial_paths = [(1.0, 1.0), (3.0, 7.0)]
 
-    end = (8.0, 8.0)
-
-    position, euler_paths = trajectory_generator.generator(start, end)
+    position = trajectory_generator.generate(initial_paths)
 
 

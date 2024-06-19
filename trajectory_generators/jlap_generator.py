@@ -2,30 +2,34 @@
 import math
 import numpy as np
 
-# Internal library 
-from trajectory_generators.a_star import AStar
-
 ACCELERATION_LIMIT = 0.177
 
 JERK_LIMIT = ACCELERATION_LIMIT / (40 * 0.05)
 
 
 class JlapGenerator: 
-    def __init__(self, environment):
-        self.a_star = AStar(environment)
+    def __init__(self):
+        pass
 
-    def generate(self, start, end):
-        initial_paths, length = self.a_star.generate(start, end)
+    def generate(self, initial_paths, current_velocity=0.0):
+        """! Generate a trajectory using the Jlap algorithm
+        @param initial_paths: A list of paths to be followed
+        @param current_velocity: The current velocity of the robot
+        @return: A list of positions
+        """
+        position = []
         
-        if len(initial_paths) > 2: 
-            pass 
-
-        else: 
-            current_velocity = 0 
-
+        if len(initial_paths) <= 2: 
             self._generate_single(initial_paths, current_velocity)
 
-    def _generate_single(self, paths, current_velocity):
+        return position
+
+    def _generate_single(self, initial_paths, current_velocity):
+        """! Generate a single trajectory
+        @param initial_paths: A list of paths to be followed
+        @param current_velocity: The current velocity of the robot
+        @return: A list of positions
+        """
         start_acceleration = 0.0
 
         end_acceleration = 0.0 
@@ -34,13 +38,22 @@ class JlapGenerator:
 
         end_velocity = 0.0
 
-        start = paths[0]
+        start = initial_paths[0]
 
-        end = paths[1]
+        end = initial_paths[1]
 
         motion = self._generate_jlap_motion(start, end, start_velocity, end_velocity, start_acceleration, end_acceleration)
 
     def _generate_jlap_motion(self, start, end, start_acceleration, end_acceleration, start_velocity, end_velocity):
+        """! Generate a motion profile using the Jlap algorithm
+        @param start: The starting position
+        @param end: The ending position
+        @param start_acceleration: The starting acceleration
+        @param end_acceleration: The ending acceleration
+        @param start_velocity: The starting velocity
+        @param end_velocity: The ending velocity
+        @return: A list of positions
+        """
         distance_vector = np.asarray(start) - np.asarray(end)
 
         line_length = np.linalg.norm(distance_vector)
@@ -52,13 +65,19 @@ class JlapGenerator:
         deceleration_displacement = self._calculate_phase_displament(0.0, end_acceleration, max_velocity, end_velocity)
 
         displacement = acceleration_displacement[3] + deceleration_displacement[3]
-
+        print("Displacement: ", displacement)
         if displacement > line_length: 
             pass
 
-
+    @staticmethod
     def _calculate_phase_displament(start_acceleration, end_acceleration, start_velocity, end_velocity):
-        
+        """! Calculate the displacement of a phase
+        @param start_acceleration: The starting acceleration
+        @param end_acceleration: The ending acceleration
+        @param start_velocity: The starting velocity
+        @param end_velocity: The ending velocity
+        @return: The displacement of the phase
+        """
         delta = end_velocity - start_velocity
 
         sign = 0
