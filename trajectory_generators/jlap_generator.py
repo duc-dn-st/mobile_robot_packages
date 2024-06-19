@@ -14,7 +14,7 @@ class JlapGenerator:
     def __init__(self, environment):
         self.a_star = AStar(environment)
 
-    def generator(self, start, end):
+    def generate(self, start, end):
         initial_paths, length = self.a_star.generate(start, end)
         
         if len(initial_paths) > 2: 

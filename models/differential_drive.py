@@ -16,6 +16,8 @@ class DifferentialDrive:
     def __init__(self, wheel_base):
         self.wheel_base = wheel_base
 
+        self.velocity_max = 1.0 # m/s
+
     def function(self, state, input, dt):
         v = input[0]
 
