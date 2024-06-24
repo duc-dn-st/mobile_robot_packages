@@ -9,7 +9,9 @@ JERK_LIMIT = ACCELERATION_LIMIT / (40 * 0.05)
 
 class JlapGenerator: 
     def __init__(self):
-        pass
+        self._velocity_step = 0.01
+
+        self._velocity_limit = 0.3
 
     def generate(self, initial_paths, current_velocity=0.0):
         """! Generate a trajectory using the Jlap algorithm
@@ -44,6 +46,8 @@ class JlapGenerator:
 
         motion = self._generate_jlap_motion(start, end, start_velocity, end_velocity, start_acceleration, end_acceleration)
 
+        print(motion)
+
     def _generate_jlap_motion(self, start, end, start_acceleration, end_acceleration, start_velocity, end_velocity):
         """! Generate a motion profile using the Jlap algorithm
         @param start: The starting position
@@ -65,9 +69,38 @@ class JlapGenerator:
         deceleration_displacement = self._calculate_phase_displament(0.0, end_acceleration, max_velocity, end_velocity)
 
         displacement = acceleration_displacement[3] + deceleration_displacement[3]
-        print("Displacement: ", displacement)
+
         if displacement > line_length: 
-            pass
+            while displacement > line_length and max_velocity > end_velocity:
+                max_velocity = np.max([max_velocity - self._velocity_step, end_velocity])
+
+                acceleration_displacement = self._calculate_phase_displament(start_acceleration, 0.0, start_velocity, max_velocity)
+
+                deceleration_displacement = self._calculate_phase_displament(0.0, end_acceleration, max_velocity, end_velocity)
+
+                displacement = acceleration_displacement[3] + deceleration_displacement[3]
+
+        else: 
+            while displacement < line_length and max_velocity < self._velocity_limit:
+                max_velocity = np.min([max_velocity + self._velocity_step, self._velocity_limit])
+
+                acceleration_displacement = self._calculate_phase_displament(start_acceleration, 0.0, start_velocity, max_velocity)
+
+                deceleration_displacement = self._calculate_phase_displament(0.0, end_acceleration, max_velocity, end_velocity)
+
+                displacement = acceleration_displacement[3] + deceleration_displacement[3]
+
+        acceleration_displacement = self._calculate_phase_displament(start_acceleration, 0.0, start_velocity, max_velocity)
+        
+        deceleration_displacement = self._calculate_phase_displament(0.0, end_acceleration, max_velocity, end_velocity)
+        
+        displacement = acceleration_displacement[3] + deceleration_displacement[3]
+
+        cruise_displacement = line_length - displacement
+
+        tc = np.max([0.0, cruise_displacement / max_velocity])
+
+        return [acceleration_displacement[0], acceleration_displacement[1], acceleration_displacement[2], tc, deceleration_displacement[0], deceleration_displacement[1], deceleration_displacement[2]]
 
     @staticmethod
     def _calculate_phase_displament(start_acceleration, end_acceleration, start_velocity, end_velocity):

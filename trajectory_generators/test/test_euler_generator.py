@@ -18,7 +18,7 @@ if __name__ == "__main__":
 
     trajectory_generator = EulerGenerator(differential_drive)
 
-    initial_paths = [(1.0, 1.0), (3.0, 7.0), (8.0, 8.0), (9.0, 5.0), (10.0, 10.0)]
+    initial_paths = [(0.6, 0.8), (0.0, 0.0), (1.0, 0.0)]
 
     start_time = time.time()
 
