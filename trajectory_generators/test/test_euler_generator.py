@@ -14,7 +14,7 @@ from models.differential_drive import DifferentialDrive
 from trajectory_generators.euler_generator import EulerGenerator
 
 if __name__ == "__main__":
-    differential_drive = DifferentialDrive(wheel_base=0.255)
+    differential_drive = DifferentialDrive(wheel_base=0.51)
 
     trajectory_generator = EulerGenerator(differential_drive)
 

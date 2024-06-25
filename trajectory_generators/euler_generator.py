@@ -204,7 +204,7 @@ class EulerGenerator:
 
             epsilon = lc / ((math.sin(beta / 2) / unit_mid[1] * unit_mid[0] + math.cos(beta / 2)))
 
-        a_euler_min = self._model.wheel_base * math.sqrt(2 * math.pi * phi_mid)
+        a_euler_min = (self._model.wheel_base / 2) * math.sqrt(2 * math.pi * phi_mid)
 
         a_euler = (epsilon * math.sin(beta / 2)) / unit_mid[1]
 
