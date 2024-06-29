@@ -35,7 +35,7 @@ class EulerGenerator:
         """
         self._n = 50 
 
-        self._generate_coefficient()
+        self._euler_table = self._calculate_coeffient()
 
         self._model = model
 
@@ -239,60 +239,22 @@ class EulerGenerator:
 
         return unit
 
-    def _generate_coefficient(self):
-        """! Generate the coefficient
-        @return The coefficient for the Euler spiral using Taylor series expansion.
-        """
-        self._euler_table = np.zeros((self._n, 2))
-
-        for i in range(self._n):
-            factorial_x = 1 
-
-            if i > 0: 
-                for j in range(1, 2 * i + 1):
-                    factorial_x = factorial_x * j
-
-            factorial_y = factorial_x * (2 * i + 1)
-
-            self._euler_table[i, 0] = pow(-1, i) * 2 / (factorial_x * ((4 * i) + 1))
-
-            self._euler_table[i, 1] = pow(-1, i) * 2 / (factorial_y * ((4 * i) + 3))
-
     # ==================================================================================================
     # STATIC METHODS
     # ==================================================================================================
     @staticmethod
-    def _calculate_unit_vector(start, end):
-        """! Calculate the unit vector
-        @param start<np.array>: The start point
-        @param end<np.array>: The end point
-        @return The unit vector
+    def _convert_to_numpy(list_of_tuple):
+        """! Convert the list of tuple to numpy array
+        @param list_of_tuple<list>: The list of tuple
+        @return The numpy array
         """
-        delta = end - start
+        output = []
 
-        return delta / np.linalg.norm(delta)
+        for tuple in list_of_tuple:
+            output.append(np.array(tuple))
 
-    @staticmethod
-    def _wrap_to_pi(angle):
-        """! Wrap the angle to pi
-        @param angle<float>: The angle
-        @return The angle wrapped to pi
-        """
-        if angle > math.pi: 
-            angle = angle - 2 * math.pi * math.floor((angle + math.pi) / (2 * math.pi))
+        return output
 
-        return angle
-    
-    @staticmethod
-    def _calculate_angle_from_vectors(start, end):
-        """! Calculate the angle
-        @param start<np.array>: The start point
-        @param end<np.array>: The end point
-        @return The angle
-        """
-        unit_vector = EulerGenerator._calculate_unit_vector(start, end)
-
-        return EulerGenerator._calculate_angle(unit_vector)
 
     @staticmethod
     def _calculate_angle(unit_array):
@@ -322,7 +284,53 @@ class EulerGenerator:
                 angle = -math.acos(unit_array_x)
         
         return angle
+
     
+    @staticmethod
+    def _calculate_coeffient(n=50):
+        """! Generate the coefficient
+        @param n<int>: The number of coefficient, default is 50.
+        @return The coefficient for the Euler spiral using Taylor series expansion.
+        """
+        euler_table = np.zeros((n, 2))
+
+        for i in range(n):
+            factorial_x = 1 
+
+            if i > 0: 
+                for j in range(1, 2 * i + 1):
+                    factorial_x = factorial_x * j
+
+            factorial_y = factorial_x * (2 * i + 1)
+
+            euler_table[i, 0] = pow(-1, i) * 2 / (factorial_x * ((4 * i) + 1))
+
+            euler_table[i, 1] = pow(-1, i) * 2 / (factorial_y * ((4 * i) + 3))
+
+        return euler_table
+
+    @staticmethod
+    def _calculate_unit_vector(start, end):
+        """! Calculate the unit vector
+        @param start<np.array>: The start point
+        @param end<np.array>: The end point
+        @return The unit vector
+        """
+        delta = end - start
+
+        return delta / np.linalg.norm(delta)
+    
+    @staticmethod
+    def _calculate_angle_from_vectors(start, end):
+        """! Calculate the angle
+        @param start<np.array>: The start point
+        @param end<np.array>: The end point
+        @return The angle
+        """
+        unit_vector = EulerGenerator._calculate_unit_vector(start, end)
+
+        return EulerGenerator._calculate_angle(unit_vector)
+
     @staticmethod
     def _is_same(lhs, rhs):
         """! Check if two values are the same
@@ -333,14 +341,12 @@ class EulerGenerator:
         return abs(lhs - rhs) < 1e-9
 
     @staticmethod
-    def _convert_to_numpy(list_of_tuple):
-        """! Convert the list of tuple to numpy array
-        @param list_of_tuple<list>: The list of tuple
-        @return The numpy array
+    def _wrap_to_pi(angle):
+        """! Wrap the angle to pi
+        @param angle<float>: The angle
+        @return The angle wrapped to pi
         """
-        output = []
+        if angle > math.pi: 
+            angle = angle - 2 * math.pi * math.floor((angle + math.pi) / (2 * math.pi))
 
-        for tuple in list_of_tuple:
-            output.append(np.array(tuple))
-
-        return output
+        return angle
