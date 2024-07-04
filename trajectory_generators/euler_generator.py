@@ -35,7 +35,7 @@ class EulerGenerator:
         """
         self._n = 50 
 
-        self._euler_table = self._calculate_coeffient()
+        self._euler_coefficient = self._calculate_coeffient()
 
         self._model = model
 
@@ -231,9 +231,9 @@ class EulerGenerator:
 
             second_exp = 0.5 * (4 * index + 3)
 
-            unit[0] = unit[0] + self._euler_table[index, 0] * math.pow(angle, first_exp)
+            unit[0] = unit[0] + self._euler_coefficient[index, 0] * math.pow(angle, first_exp)
 
-            unit[1] = unit[1] + self._euler_table[index, 1] * math.pow(angle, second_exp)
+            unit[1] = unit[1] + self._euler_coefficient[index, 1] * math.pow(angle, second_exp)
 
         unit = unit / math.sqrt(2 * math.pi)
 
@@ -292,7 +292,7 @@ class EulerGenerator:
         @param n<int>: The number of coefficient, default is 50.
         @return The coefficient for the Euler spiral using Taylor series expansion.
         """
-        euler_table = np.zeros((n, 2))
+        euler_coefficient = np.zeros((n, 2))
 
         for i in range(n):
             factorial_x = 1 
@@ -303,11 +303,11 @@ class EulerGenerator:
 
             factorial_y = factorial_x * (2 * i + 1)
 
-            euler_table[i, 0] = pow(-1, i) * 2 / (factorial_x * ((4 * i) + 1))
+            euler_coefficient[i, 0] = pow(-1, i) * 2 / (factorial_x * ((4 * i) + 1))
 
-            euler_table[i, 1] = pow(-1, i) * 2 / (factorial_y * ((4 * i) + 3))
+            euler_coefficient[i, 1] = pow(-1, i) * 2 / (factorial_y * ((4 * i) + 3))
 
-        return euler_table
+        return euler_coefficient
 
     @staticmethod
     def _calculate_unit_vector(start, end):
