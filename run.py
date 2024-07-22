@@ -1,5 +1,6 @@
 
 # Standard library
+import sys
 from matplotlib import pyplot as plt
 
 # Internal library
@@ -31,7 +32,7 @@ if __name__ == "__main__":
 
     ax.set_box_aspect(1)
 
-    ax.plot( simulator.x_out[0, :], simulator.x_out[1, :])
+    ax.plot(simulator.x_out[0, :], simulator.x_out[1, :])
 
     ax.plot([path[0] for path in trajectory.x], [path[1] for path in trajectory.x])
 
