@@ -11,88 +11,92 @@ class PurePursuit:
 
     k = 1
 
-    def __init__(self, trajectory):
+    def __init__(self, model, trajectory):
         """! Constructor
         """
+        self.model = model
+
         self.trajectory = trajectory
 
         self.old_nearest_point_index = None
 
-    def _initialize(self):
-        self.v = 10 / 36 # m/s
+    def initialize(self):
+        pass
 
     def _apply_proportional_control(k_p, target, current):
         """! Apply proportional control
         """
-        a = k_p * (target - current)
+        target_v = (target[0] + target[1]) / 2
+
+        v = (current[0] + current[1]) / 2
+
+        a = k_p * (target_v - v)
 
         return a
-
-        pass
     
     @staticmethod
-    def _calculate_distance(x, y, target_x, target_y):
-        distance_x = x - target_x 
+    def _calculate_distance(reference_x, current_x):
+        distance = current_x - reference_x
 
-        distance_y = y - target_y
-        
-        return math.hypot(distance_x, distance_y)
+        x = distance[:, 0] if distance.ndim == 2 else distance[0]
+
+        y = distance[:, 1] if distance.ndim == 2 else distance[1]
+
+        return np.hypot(x, y)
 
     def execute(self, state, input, previous_index):
         status = True
 
-        index, lookahead_distance = self._search_target_index(state)
+        index, lookahead_distance = self._search_target_index(state, input)
 
-        if previous_index >= index:
-            index = previous_index
+        alpha = math.atan2(self.trajectory.x[index, 1] - state[1], self.trajectory.x[index, 0] - state[0]) - state[2]
 
-        if index < len(self.trajectory.x):
-            toward_x = self.trajectory.x[index]
+        v = 5.0
 
-            toward_y = self.trajectory.y[index]
+        w = v * 2.0 * math.sin(alpha) / lookahead_distance
 
-        else: 
-            toward_x = self.trajectory.x[-1]
+        # v_r = v + w * self.model.wheel_base / 2.0
 
-            toward_y = self.trajectory.y[-1]
+        # v_l = v - w * self.model.wheel_base / 2.0
 
-        output = input
+        return status, [v, w]
 
-        return status, output
-
-    def _search_target_index(self, state):
+    def _search_target_index(self, state, input):
         if self.old_nearest_point_index is None: 
-            distance_x = [state[0] - x for x in self.trajectory.x]
-
-            distance_y = [state[1] - y for y in self.trajectory.y]
-
-            distance = np.hypot(distance_x, distance_y)
-
-            index = np.argmin(distance)
+            all_distance = self._calculate_distance(self.trajectory.x, state)
+            
+            index = np.argmin(all_distance)
 
         else: 
             index = self.old_nearest_point_index
 
-            distance_at_index = self._calculate_distance(state[0], state[1], self.trajectory.x[index], self.trajectory.y[index])
+            this_distance = self._calculate_distance(self.trajectory.x[index], state)
 
             while True: 
-                distance_next_index = self._calculate_distance(state[0], state[1], self.trajectory.x[index + 1], self.trajectory.y[index + 1])
+                next_distance = self._calculate_distance(self.trajectory.x[index + 1], state)
 
-                if distance_at_index < distance_next_index:
+                if this_distance < next_distance:
                     break
 
-                index = index + 1 if index + 1 < len(self.trajectory.x) else index
+                if (index + 1) < len(self.trajectory.x):
+                    index += 1
 
-                distance_at_index = distance_next_index
+                this_distance = next_distance
 
-        self.old_nearest_point_index = index
+            self.old_nearest_point_index = index
 
-        lookahead_distance = PurePursuit.k * self.v + PurePursuit.lookahead_distance
+        v = (input[0] + input[1]) / 2
 
-        while lookahead_distance > self._calculate_distance(state[0], state[1], self.trajectory.x[index], self.trajectory.y[index]):
+        lookahead_distance = PurePursuit.lookahead_gain * v + PurePursuit.lookahead_distance
+
+        distance = self._calculate_distance(self.trajectory.x[index], state)
+
+        while lookahead_distance > distance:
             if index + 1 >= len(self.trajectory.x):
                 break
 
             index += 1
+
+            distance = self._calculate_distance(self.trajectory.x[index], state)
 
         return index, lookahead_distance 

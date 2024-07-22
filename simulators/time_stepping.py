@@ -53,7 +53,7 @@ class TimeStepping:
 
             if not status: 
                 self.u_out[:, index] = np.zeros([self.model.nu, 1])
-            
+
             x_m = self.model.function(self.x_out[:, index], self.u_out[:, index], TimeStepping.dt)
 
             y_m = x_m

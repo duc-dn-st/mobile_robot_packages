@@ -9,26 +9,32 @@ import numpy as np
 class SimpleGenerator: 
     """! Simple trajectory generator."""
 
-    def __init__(self):
+    def __init__(self, environment):
         """! Constructor.
         """
+        self.x = None 
+
+        self.u = None
+        
+        self.t = None
+
         current_directory = os.path.dirname(os.path.abspath(__file__))
 
         self._data_folder = os.path.join(current_directory, 'data')
 
-    def generate(self, file_name):
+    def generate(self, file_name, nx, nu):
         """! Generate a simple trajectory.
         @param file_name<string>: The file name to save the generated trajectory
         """
         data = np.genfromtxt(os.path.join(self._data_folder, file_name), delimiter=',')
         
-        x = data[1:, 1]
-        
-        y = data[1:, 2]
-        
-        t = data[1:, 0]
+        self.x = np.array(data[0:, 1:1+nx])
 
-        return x, y, t, data
+        if len(data) > 1 + nx:
+            self.u = np.array(data[0:, 1+nx:1+nx+nu])
+        
+        self.t = np.array(data[0:, 0])
+
 
 
 

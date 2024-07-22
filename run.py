@@ -1,8 +1,6 @@
 
 # Standard library
-import sys
-
-sys.path.append("../../")
+from matplotlib import pyplot as plt
 
 # Internal library
 from environments.graph import Graph
@@ -21,14 +19,20 @@ if __name__ == "__main__":
 
     trajectory = SimpleGenerator(environment)
 
-    trajectory.generate(None, None)
+    trajectory.generate("eight_curve.csv", nx=3, nu=2)
 
-    controller = PurePursuit(trajectory)
+    controller = PurePursuit(model, trajectory)
 
     simulator = TimeStepping(model, trajectory, controller, None)
 
     simulator.run(0.0)
 
-    print(simulator.x_out) 
+    figure, ax = plt.subplots()
 
-    print(simulator.y_out)
+    ax.set_box_aspect(1)
+
+    ax.plot( simulator.x_out[0, :], simulator.x_out[1, :])
+
+    ax.plot([path[0] for path in trajectory.x], [path[1] for path in trajectory.x])
+
+    plt.show()
