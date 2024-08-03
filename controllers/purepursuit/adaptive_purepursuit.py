@@ -72,7 +72,7 @@ class AdaptivePurePursuit:
         # v_r = v + w * self.model.wheel_base / 2.0
 
         # v_l = v - w * self.model.wheel_base / 2.0
-       
+
         return status, [v, w]
 
     # ==================================================================================================

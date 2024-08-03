@@ -20,10 +20,15 @@ class SimpleGenerator:
 
         self._data_folder = os.path.join(current_directory, "data")
 
-    def generate(self, file_name, nx, nu):
+    def generate(self, file_name, nx, nu, is_derivative=False):
         """! Generate a simple trajectory.
         @param file_name<string>: The file name to save the
         generated trajectory
+        @param nx<int>: The number of states
+        @param nu<int>: The number of inputs
+        @param is_derivative<bool>: The flag to indicate if the
+        generated trajectory is a derivative
+        @return None
         """
         data = np.genfromtxt(os.path.join(
             self._data_folder, file_name), delimiter=",")
@@ -39,3 +44,12 @@ class SimpleGenerator:
             self.u = np.array(data[initial_index:, 1 + nx: 1 + nx + nu])
 
         self.t = np.array(data[initial_index:, 0])
+
+        self.sampling_time = self.t[1] - self.t[0]
+
+    # ==================================================================
+    # PRIVATE METHODS
+    # ==================================================================
+    def _generate_derivative(self):
+        """! Generate a derivative trajectory."""
+        pass

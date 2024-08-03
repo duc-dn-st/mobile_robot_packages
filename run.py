@@ -18,7 +18,8 @@ if __name__ == "__main__":
 
     trajectory = SimpleGenerator(environment)
 
-    trajectory.generate("global_trajectory.csv", nx=3, nu=2)
+    trajectory.generate("global_trajectory.csv", nx=3, nu=2,
+                        is_derivative=True)
 
     controller = PurePursuit(model, trajectory)
 

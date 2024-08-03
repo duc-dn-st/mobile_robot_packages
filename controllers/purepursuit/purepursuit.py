@@ -40,6 +40,8 @@ class PurePursuit:
 
         self.old_nearest_point_index = None
 
+        self._v = 0.0
+
     def initialize(self):
         """! Initialize the controller
         @note The method is used to initialize the controller.
@@ -110,11 +112,15 @@ class PurePursuit:
             - state[2]
         )
 
-        v = self.model.velocity_max
+        a = self._apply_proportional_control(
+            PurePursuit.k, self._v, self.trajectory.u[0, index]
+        )
 
-        w = v * 2.0 * math.sin(alpha) / lookahead_distance
+        self._v = self._v + a * self._sampling_time
 
-        return status, [v, w]
+        w = self._v * 2.0 * math.sin(alpha) / lookahead_distance
+
+        return status, [self._v, w]
 
     def _search_target_index(self, state, input):
         """! Search the target index
