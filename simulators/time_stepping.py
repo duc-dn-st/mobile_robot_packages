@@ -1,3 +1,15 @@
+#!/usr/bin/env python3
+##
+# @file time_stepping.py
+#
+# @brief Provide implementation of time stepping for autonomous driving.
+# autonomous driving.
+#
+# @section author_doxygen_example Author(s)
+# - Created by Tran Viet Thanh on 03/08/2024.
+#
+# Copyright (c) 2024 System Engineering Laboratory.  All rights reserved.
+
 # Standard library
 import numpy as np
 
@@ -5,11 +17,20 @@ import numpy as np
 class TimeStepping:
     t_start = 0
 
-    t_max = 600
+    t_max = 60
 
     dt = 0.05
 
+    # ==================================================================
+    # PUBLIC METHODS
+    # ==================================================================
     def __init__(self, model, trajectory, controller, observer):
+        """! Constructor
+        @param model<instance>: The vehicle model
+        @param trajectory<instance>: The trajectory
+        @param controller<instance>: The controller
+        @param observer<instance>: The observer
+        """
         self.t_out = []
 
         self.x_out = []
@@ -26,7 +47,12 @@ class TimeStepping:
 
         self.observer = observer
 
+        self._goal_tolerance = 0.1
+
     def run(self, q0):
+        """! Run the time stepping
+        @param q0<list>: The initial state
+        """
         self.t_out = np.linspace(
             TimeStepping.t_start,
             TimeStepping.t_max,
@@ -69,3 +95,25 @@ class TimeStepping:
                 self.x_out[:, index + 1] = x_m
 
                 self.y_out[:, index + 1] = y_m
+
+            if self._is_goal(x_m, self.trajectory.x[-1]):
+                break
+
+        self.u_out = self.u_out[:, : index + 1]
+
+        self.x_out = self.x_out[:, : index + 1]
+
+        self.y_out = self.y_out[:, : index + 1]
+
+    # ==================================================================
+    # PRIVATE METHODS
+    # ==================================================================
+    def _is_goal(self, state, goal):
+        """! Check if the vehicle reaches the goal
+        @param state<list>: The state of the vehicle
+        @param goal<list>: The goal
+        @return<bool>: The result
+        """
+        distance = np.linalg.norm(state - goal)
+
+        return distance < self._goal_tolerance

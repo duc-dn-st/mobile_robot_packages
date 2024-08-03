@@ -22,7 +22,7 @@ class PurePursuit:
     autonomous driving.
     @note The controller is used to follow a trajectory.
     """
-    lookahead_distance = 2.0
+    lookahead_distance = 0.8
 
     lookahead_gain = 0.1
 
@@ -104,13 +104,13 @@ class PurePursuit:
 
         alpha = (
             math.atan2(
-                trajectory_x - state[1],
-                trajectory_y - state[0],
+                trajectory_y - state[1],
+                trajectory_x - state[0],
             )
             - state[2]
         )
 
-        v = 5.0
+        v = self.model.velocity_max
 
         w = v * 2.0 * math.sin(alpha) / lookahead_distance
 

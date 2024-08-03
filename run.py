@@ -26,9 +26,11 @@ if __name__ == "__main__":
 
     simulator.run(0.0)
 
-    figure, (ax1, ax2) = plt.subplots(1, 2)
+    figure, ax1 = plt.subplots(1, 1)
 
     ax1.set_box_aspect(1)
+
+    print("simulator.x_out: ", simulator.x_out[:, -2])
 
     ax1.plot(simulator.x_out[0, :], simulator.x_out[1, :], "r")
 
@@ -38,6 +40,6 @@ if __name__ == "__main__":
         "--b"
     )
 
-    ax2.plot(simulator.t_out, simulator.u_out[0, :])
+    # ax2.plot(simulator.t_out, simulator.u_out[0, :])
 
     plt.show()

@@ -28,9 +28,14 @@ class SimpleGenerator:
         data = np.genfromtxt(os.path.join(
             self._data_folder, file_name), delimiter=",")
 
-        self.x = np.array(data[0:, 1: 1 + nx])
+        initial_index = 0
+
+        if np.isnan(np.nan):
+            initial_index = 1
+
+        self.x = np.array(data[initial_index:, 1: 1 + nx])
 
         if len(data) > 1 + nx:
-            self.u = np.array(data[0:, 1 + nx: 1 + nx + nu])
+            self.u = np.array(data[initial_index:, 1 + nx: 1 + nx + nu])
 
-        self.t = np.array(data[0:, 0])
+        self.t = np.array(data[initial_index:, 0])
