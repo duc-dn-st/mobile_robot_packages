@@ -1,13 +1,11 @@
-
 # Standard library
-import sys
 from matplotlib import pyplot as plt
 
 # Internal library
 from environments.graph import Graph
-from controllers.purepursuit import PurePursuit
 from simulators.time_stepping import TimeStepping
-from models.differential_drive import DifferentialDrive 
+from models.differential_drive import DifferentialDrive
+from controllers.purepursuit.purepursuit import PurePursuit
 from trajectory_generators.simple_generator import SimpleGenerator
 
 
@@ -20,7 +18,7 @@ if __name__ == "__main__":
 
     trajectory = SimpleGenerator(environment)
 
-    trajectory.generate("eight_curve.csv", nx=3, nu=2)
+    trajectory.generate("global_trajectory.csv", nx=3, nu=2)
 
     controller = PurePursuit(model, trajectory)
 
@@ -28,12 +26,18 @@ if __name__ == "__main__":
 
     simulator.run(0.0)
 
-    figure, ax = plt.subplots()
+    figure, (ax1, ax2) = plt.subplots(1, 2)
 
-    ax.set_box_aspect(1)
+    ax1.set_box_aspect(1)
 
-    ax.plot(simulator.x_out[0, :], simulator.x_out[1, :])
+    ax1.plot(simulator.x_out[0, :], simulator.x_out[1, :], "r")
 
-    ax.plot([path[0] for path in trajectory.x], [path[1] for path in trajectory.x])
+    ax1.plot(
+        [path[0] for path in trajectory.x],
+        [path[1] for path in trajectory.x],
+        "b"
+    )
+
+    ax2.plot(simulator.t_out, simulator.u_out[0, :])
 
     plt.show()

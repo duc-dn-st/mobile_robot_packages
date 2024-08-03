@@ -2,12 +2,11 @@
 # Standard library
 import os
 import sys
-import matplotlib.pyplot as plt
 
-sys.path.append(os.path.join("..",".."))
 
 # Internal library
-from trajectory_generators.jlap_generator import JlapGenerator
+sys.path.append(os.path.join("..", ".."))
+from trajectory_generators.jlap_generator import JlapGenerator # noqa
 
 
 if __name__ == "__main__":
@@ -17,5 +16,3 @@ if __name__ == "__main__":
     initial_paths = [(1.0, 1.0), (3.0, 7.0)]
 
     position = trajectory_generator.generate(initial_paths)
-
-

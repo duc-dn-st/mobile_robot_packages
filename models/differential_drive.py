@@ -2,7 +2,7 @@
 # Standard library 
 import math 
 
-# External library 
+# External library
 import numpy as np
 
 
@@ -16,7 +16,7 @@ class DifferentialDrive:
     def __init__(self, wheel_base):
         self.wheel_base = wheel_base
 
-        self.velocity_max = 1.0 # m/s
+        self.velocity_max = 1.0
 
     def function(self, state, input, dt):
         v = input[0]

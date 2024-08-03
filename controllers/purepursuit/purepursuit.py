@@ -1,7 +1,6 @@
-
 # Standard library
 import math
-import numpy as np 
+import numpy as np
 
 
 class PurePursuit:
@@ -12,8 +11,7 @@ class PurePursuit:
     k = 1
 
     def __init__(self, model, trajectory):
-        """! Constructor
-        """
+        """! Constructor"""
         self.model = model
 
         self.trajectory = trajectory
@@ -24,8 +22,7 @@ class PurePursuit:
         pass
 
     def _apply_proportional_control(k_p, target, current):
-        """! Apply proportional control
-        """
+        """! Apply proportional control"""
         target_v = (target[0] + target[1]) / 2
 
         v = (current[0] + current[1]) / 2
@@ -33,7 +30,7 @@ class PurePursuit:
         a = k_p * (target_v - v)
 
         return a
-    
+
     @staticmethod
     def _calculate_distance(reference_x, current_x):
         distance = current_x - reference_x
@@ -49,7 +46,13 @@ class PurePursuit:
 
         index, lookahead_distance = self._search_target_index(state, input)
 
-        alpha = math.atan2(self.trajectory.x[index, 1] - state[1], self.trajectory.x[index, 0] - state[0]) - state[2]
+        alpha = (
+            math.atan2(
+                self.trajectory.x[index, 1] - state[1],
+                self.trajectory.x[index, 0] - state[0],
+            )
+            - state[2]
+        )
 
         v = 5.0
 
@@ -62,18 +65,21 @@ class PurePursuit:
         return status, [v, w]
 
     def _search_target_index(self, state, input):
-        if self.old_nearest_point_index is None: 
+        if self.old_nearest_point_index is None:
             all_distance = self._calculate_distance(self.trajectory.x, state)
-            
+
             index = np.argmin(all_distance)
 
-        else: 
+        else:
             index = self.old_nearest_point_index
 
-            this_distance = self._calculate_distance(self.trajectory.x[index], state)
+            this_distance = self._calculate_distance(
+                self.trajectory.x[index], state)
 
-            while True: 
-                next_distance = self._calculate_distance(self.trajectory.x[index + 1], state)
+            while True:
+                next_distance = self._calculate_distance(
+                    self.trajectory.x[index + 1], state
+                )
 
                 if this_distance < next_distance:
                     break
@@ -87,7 +93,9 @@ class PurePursuit:
 
         v = (input[0] + input[1]) / 2
 
-        lookahead_distance = PurePursuit.lookahead_gain * v + PurePursuit.lookahead_distance
+        lookahead_distance = (
+            PurePursuit.lookahead_gain * v + PurePursuit.lookahead_distance
+        )
 
         distance = self._calculate_distance(self.trajectory.x[index], state)
 
@@ -97,6 +105,7 @@ class PurePursuit:
 
             index += 1
 
-            distance = self._calculate_distance(self.trajectory.x[index], state)
+            distance = self._calculate_distance(
+                self.trajectory.x[index], state)
 
-        return index, lookahead_distance 
+        return index, lookahead_distance
