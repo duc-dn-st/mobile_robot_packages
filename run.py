@@ -35,7 +35,7 @@ if __name__ == "__main__":
     ax1.plot(
         [path[0] for path in trajectory.x],
         [path[1] for path in trajectory.x],
-        "b"
+        "--b"
     )
 
     ax2.plot(simulator.t_out, simulator.u_out[0, :])

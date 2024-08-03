@@ -1,12 +1,12 @@
 
-# Standard library 
-import math 
+# Standard library
+import math
 
 # External library
 import numpy as np
 
 
-class DifferentialDrive: 
+class DifferentialDrive:
     # [x, y, theta]
     nx = 3
 

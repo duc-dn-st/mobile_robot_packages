@@ -5,7 +5,7 @@ import numpy as np
 class TimeStepping:
     t_start = 0
 
-    t_max = 60
+    t_max = 600
 
     dt = 0.05
 
@@ -63,7 +63,7 @@ class TimeStepping:
                 self.x_out[:, index], self.u_out[:, index], TimeStepping.dt
             )
 
-            y_m = x_m + np.random.normal(0, 1, self.model.nx)
+            y_m = x_m
 
             if index < nt - 1:
                 self.x_out[:, index + 1] = x_m
