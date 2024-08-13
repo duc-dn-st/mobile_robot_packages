@@ -16,18 +16,18 @@ if __name__ == "__main__":
 
     model = DifferentialDrive(wheel_base)
 
-    trajectory = SimpleGenerator(environment)
+    trajectory = SimpleGenerator(model)
 
     trajectory.generate("global_trajectory.csv", nx=3, nu=2,
                         is_derivative=True)
 
     controller = PurePursuit(model, trajectory)
 
-    simulator = TimeStepping(model, trajectory, controller, None)
+    simulator = TimeStepping(model, trajectory, controller, None, t_max=120)
 
     simulator.run(0.0)
 
-    figure, ax1 = plt.subplots(1, 1)
+    _, ax1 = plt.subplots(1, 1)
 
     ax1.set_box_aspect(1)
 
@@ -41,6 +41,18 @@ if __name__ == "__main__":
         "--b"
     )
 
-    # ax2.plot(simulator.t_out, simulator.u_out[0, :])
+    _, (ax2, ax3) = plt.subplots(1, 2)
+
+    ax2.plot(simulator.t_out[:len(simulator.u_out[0, :])],
+             simulator.u_out[0, :])
+
+    ax3.plot(simulator.t_out[:len(simulator.u_out[0, :])],
+             simulator.u_out[1, :])
+
+    _, (ax4, ax5) = plt.subplots(1, 2)
+
+    ax4.plot(simulator.t_out, simulator.dudt_out[0, :])
+
+    ax5.plot(simulator.t_out, simulator.dudt_out[1, :])
 
     plt.show()

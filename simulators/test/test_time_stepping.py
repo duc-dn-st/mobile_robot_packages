@@ -2,12 +2,12 @@
 # Standard library
 import sys
 
-sys.path.append("../../")
 
 # Internal library
-from models.differential_drive import DifferentialDrive 
-from simulators.time_stepping import TimeStepping
-from controllers.feedforward import FeedForward
+sys.path.append("../../")
+from models.differential_drive import DifferentialDrive # noqa
+from simulators.time_stepping import TimeStepping # noqa
+from controllers.feedforward import FeedForward # noqa
 
 
 if __name__ == "__main__":

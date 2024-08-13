@@ -8,13 +8,15 @@ import numpy as np
 class SimpleGenerator:
     """! Simple trajectory generator."""
 
-    def __init__(self, environment):
+    def __init__(self, model):
         """! Constructor."""
         self.x = None
 
         self.u = None
 
         self.t = None
+
+        self._model = model
 
         current_directory = os.path.dirname(os.path.abspath(__file__))
 
@@ -41,7 +43,8 @@ class SimpleGenerator:
         self.x = np.array(data[initial_index:, 1: 1 + nx])
 
         if len(data) > 1 + nx:
-            self.u = np.array(data[initial_index:, 1 + nx: 1 + nx + nu])
+            self.u = self._retrieve_u(
+                initial_index, data, nx, nu, is_derivative)
 
         self.t = np.array(data[initial_index:, 0])
 
@@ -50,6 +53,23 @@ class SimpleGenerator:
     # ==================================================================
     # PRIVATE METHODS
     # ==================================================================
-    def _generate_derivative(self):
-        """! Generate a derivative trajectory."""
-        pass
+    def _retrieve_u(self, initial_index, data, nx, nu, is_derivative):
+        """! Retrieve the input at time t.
+        @param t<float>: The time
+        @return u<list>: The input
+        """
+        if not is_derivative:
+            u = np.array(data[initial_index:, 1 + nx: 1 + nx + nu])
+
+        else:
+            u = np.zeros((self._model.nu, len(data) - initial_index))
+
+            u[0, :] = np.hypot(
+                np.array(data[initial_index:, 1 + nx: 1 + nx + 1]),
+                np.array(data[initial_index:, 1 + nx + 1: 1 + nx + 2]),
+            ).reshape(-1)
+
+            u[1, :] = np.array(
+                data[initial_index:, 1 + nx + 2: 1 + nx + 3]).reshape(-1)
+
+        return u

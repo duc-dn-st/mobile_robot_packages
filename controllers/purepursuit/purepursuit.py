@@ -22,12 +22,15 @@ class PurePursuit:
     autonomous driving.
     @note The controller is used to follow a trajectory.
     """
-    lookahead_distance = 0.8
+    lookahead_distance = 0.3
 
-    lookahead_gain = 0.1
+    lookahead_gain = 0.0
 
-    k = 1
+    k = 0.6
 
+    # ==================================================================================================
+    # PUBLIC METHODS
+    # ==================================================================================================
     def __init__(self, model, trajectory):
         """! Constructor
         @param model<instance>: The vehicle model
@@ -42,41 +45,15 @@ class PurePursuit:
 
         self._v = 0.0
 
+        self._max_acceleration = 0.04
+
+        self._w = 0.0
+
     def initialize(self):
         """! Initialize the controller
         @note The method is used to initialize the controller.
         """
         pass
-
-    def _apply_proportional_control(k_p, target, current):
-        """! Apply proportional control
-        @param k_p<float>: The proportional gain
-        @param target<list>: The target
-        @param current<list>: The current
-        @return<float>: The acceleration
-        """
-        target_v = (target[0] + target[1]) / 2
-
-        v = (current[0] + current[1]) / 2
-
-        a = k_p * (target_v - v)
-
-        return a
-
-    @staticmethod
-    def _calculate_distance(reference_x, current_x):
-        """! Calculate the distance
-        @param reference_x<list>: The reference x
-        @param current_x<list>: The current x
-        @return<float>: The distance
-        """
-        distance = current_x - reference_x
-
-        x = distance[:, 0] if distance.ndim == 2 else distance[0]
-
-        y = distance[:, 1] if distance.ndim == 2 else distance[1]
-
-        return np.hypot(x, y)
 
     def execute(self, state, input, previous_index):
         """! Execute the controller
@@ -113,15 +90,62 @@ class PurePursuit:
         )
 
         a = self._apply_proportional_control(
-            PurePursuit.k, self._v, self.trajectory.u[0, index]
+            PurePursuit.k, self.trajectory.u[0, index], self._v
         )
 
-        self._v = self._v + a * self._sampling_time
+        # if index + 1 < len(self.trajectory.x):
+        #     dudt = (self.trajectory.u[0, index + 1] -
+        #             self.trajectory.u[0, index]
+        #             ) / self.trajectory.sampling_time
 
-        w = self._v * 2.0 * math.sin(alpha) / lookahead_distance
+        a = self._max_acceleration if a > self._max_acceleration else a
+
+        self._v = self._v + a * self.trajectory.sampling_time
+
+        w = self._v * 2.0 * alpha / lookahead_distance
+
+        dwdt = min(
+            max((w - self._w) / self.trajectory.sampling_time, -0.0275), 0.033)
+
+        w = self._w + dwdt * self.trajectory.sampling_time
+
+        self._w = w
 
         return status, [self._v, w]
 
+    # ==================================================================================================
+    # STATIC METHODS
+    # ==================================================================================================
+    @staticmethod
+    def _apply_proportional_control(k_p, target, current):
+        """! Apply proportional control
+        @param k_p<float>: The proportional gain
+        @param target<list>: The target
+        @param current<list>: The current
+        @return<float>: The acceleration
+        """
+        a = k_p * (target - current)
+
+        return a
+
+    @staticmethod
+    def _calculate_distance(reference_x, current_x):
+        """! Calculate the distance
+        @param reference_x<list>: The reference x
+        @param current_x<list>: The current x
+        @return<float>: The distance
+        """
+        distance = current_x - reference_x
+
+        x = distance[:, 0] if distance.ndim == 2 else distance[0]
+
+        y = distance[:, 1] if distance.ndim == 2 else distance[1]
+
+        return np.hypot(x, y)
+
+    # ==================================================================================================
+    # PRIVATE METHODS
+    # ==================================================================================================
     def _search_target_index(self, state, input):
         """! Search the target index
         @param state<list>: The state of the vehicle

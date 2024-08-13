@@ -17,14 +17,12 @@ import numpy as np
 class TimeStepping:
     t_start = 0
 
-    t_max = 60
-
     dt = 0.05
 
     # ==================================================================
     # PUBLIC METHODS
     # ==================================================================
-    def __init__(self, model, trajectory, controller, observer):
+    def __init__(self, model, trajectory, controller, observer, t_max=60):
         """! Constructor
         @param model<instance>: The vehicle model
         @param trajectory<instance>: The trajectory
@@ -39,6 +37,10 @@ class TimeStepping:
 
         self.u_out = []
 
+        self.dudt_out = []
+
+        self.ddudt_out = []
+
         self.model = model
 
         self.trajectory = trajectory
@@ -49,14 +51,16 @@ class TimeStepping:
 
         self._goal_tolerance = 0.1
 
+        self._t_max = t_max
+
     def run(self, q0):
         """! Run the time stepping
         @param q0<list>: The initial state
         """
         self.t_out = np.linspace(
             TimeStepping.t_start,
-            TimeStepping.t_max,
-            int((1 / TimeStepping.dt) * TimeStepping.t_max),
+            self._t_max,
+            int((1 / TimeStepping.dt) * self._t_max),
         )
 
         nt = self.t_out.shape[-1]
@@ -72,6 +76,10 @@ class TimeStepping:
 
         self.u_out = np.zeros([self.model.nu, nt])
 
+        self.dudt_out = np.zeros([self.model.nu, nt])
+
+        self.ddudt_out = np.zeros([self.model.nu, nt])
+
         self.controller.initialize()
 
         for index in range(nt):
@@ -79,11 +87,14 @@ class TimeStepping:
 
             u_m = self.u_out[:, index]
 
-            status, self.u_out[:, index] = self.controller.execute(
+            status, u_m = self.controller.execute(
                 y_m, u_m, index)
 
             if not status:
                 self.u_out[:, index] = np.zeros([self.model.nu, 1])
+
+            self.dudt_out[:, index] = (
+                u_m - self.u_out[:, index]) / TimeStepping.dt
 
             x_m = self.model.function(
                 self.x_out[:, index], self.u_out[:, index], TimeStepping.dt
@@ -95,6 +106,8 @@ class TimeStepping:
                 self.x_out[:, index + 1] = x_m
 
                 self.y_out[:, index + 1] = y_m
+
+                self.u_out[:, index + 1] = u_m
 
             if self._is_goal(x_m, self.trajectory.x[-1]):
                 break
