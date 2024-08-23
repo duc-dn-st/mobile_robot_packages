@@ -28,7 +28,7 @@ int main(int argc, char **argv)
     Global_traj_class GlobalTraj(nh, private_nh);
 
     Eigen::RowVector2d robot_current_position; // [m] Robot's current [X, Y] coordinates in the global map
-    robot_current_position << 1.0, 1.0;
+    robot_current_position << 0.0, 0.0;
     double robot_current_path_velocity = 0;        // [m/s] Robot's current path velocity
 
     GlobalTraj.get_robot_current_state(robot_current_position, robot_current_path_velocity);

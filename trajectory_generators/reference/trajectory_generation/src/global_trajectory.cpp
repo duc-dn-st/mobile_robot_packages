@@ -24,8 +24,8 @@ Global_traj_class::Global_traj_class(ros::NodeHandle nh, ros::NodeHandle private
             if (goal_nodes_.empty())
             {
                 default_way_points.resize(2, 2);
-                default_way_points << 3.0, 7.0,
-                                      8.0 , 8.0;
+                default_way_points << 5.0, 0,
+                                      5.0 , 5.0;
 
                 for (unsigned int ii = 0; ii < default_way_points.rows(); ii++)
                 {
@@ -45,7 +45,7 @@ Global_traj_class::Global_traj_class(ros::NodeHandle nh, ros::NodeHandle private
     }
 
     way_points.resize(goal_nodes_.size() + 1, 2);
-    way_points.row(0) << 1, 1;
+    way_points.row(0) << 0.0, 0.0;
     for (unsigned int ii = 0; ii < goal_nodes_.size(); ii++)
     {
         way_points.row(ii+1) << goal_nodes_.at(ii).x(), goal_nodes_.at(ii).y();

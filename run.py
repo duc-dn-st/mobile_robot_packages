@@ -1,14 +1,11 @@
-
 # Standard library
-import sys
-
-sys.path.append("../../")
+from matplotlib import pyplot as plt
 
 # Internal library
 from environments.graph import Graph
-from controllers.purepursuit import PurePursuit
 from simulators.time_stepping import TimeStepping
-from models.differential_drive import DifferentialDrive 
+from models.differential_drive import DifferentialDrive
+from controllers.purepursuit.purepursuit import PurePursuit
 from trajectory_generators.simple_generator import SimpleGenerator
 
 
@@ -19,16 +16,57 @@ if __name__ == "__main__":
 
     model = DifferentialDrive(wheel_base)
 
-    trajectory = SimpleGenerator(environment)
+    trajectory = SimpleGenerator(model)
 
-    trajectory.generate(None, None)
+    trajectory.generate("global_trajectory.csv", nx=3, nu=2,
+                        is_derivative=True)
 
-    controller = PurePursuit(trajectory)
+    controller = PurePursuit(model, trajectory)
 
-    simulator = TimeStepping(model, trajectory, controller, None)
+    simulator = TimeStepping(model, trajectory, controller, None, t_max=120)
 
     simulator.run(0.0)
 
-    print(simulator.x_out) 
+    _, ax1 = plt.subplots(1, 1)
 
-    print(simulator.y_out)
+    ax1.set_box_aspect(1)
+
+    print("simulator.x_out: ", simulator.x_out[:, -2])
+
+    ax1.plot(simulator.x_out[0, :], simulator.x_out[1, :], "r",
+             label="Tracking performance")
+
+    ax1.plot(
+        [path[0] for path in trajectory.x],
+        [path[1] for path in trajectory.x],
+        "--b", label="Trajectory",
+    )
+    ax1.legend()
+    ax1.set_xlabel("X [m]")
+    ax1.set_ylabel("Y [m]")
+    plt.tight_layout()
+    _, (ax2, ax3) = plt.subplots(1, 2)
+
+    ax2.plot(simulator.t_out[:len(simulator.u_out[0, :])],
+             simulator.u_out[0, :])
+
+    ax3.plot(simulator.t_out[:len(simulator.u_out[0, :])],
+             simulator.u_out[1, :])
+    
+    ax2.set_xlabel("Time [s]")
+    ax2.set_ylabel("Velocity [m/s]")
+    ax3.set_xlabel("Time [s]")
+    ax3.set_ylabel("Angular Velocity [rad/s]")
+    plt.tight_layout()
+    _, (ax4, ax5) = plt.subplots(1, 2)
+
+    ax4.plot(simulator.t_out, simulator.dudt_out[0, :])
+
+    ax4.set_xlabel("Time [s]")
+    ax4.set_ylabel("Acceleration [m/s^2]")
+
+    ax5.plot(simulator.t_out, simulator.dudt_out[1, :])
+    ax5.set_xlabel("Time [s]")
+    ax5.set_ylabel("Angular Acceleration [rad/s^2]")
+    plt.tight_layout()
+    plt.show()

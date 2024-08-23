@@ -2,50 +2,59 @@
 # Standard library
 import os
 import sys
-import matplotlib.pyplot as plt
-
-sys.path.append(os.path.join("..",".."))
+import numpy as np
+from matplotlib import pyplot as plt
 
 # Internal library
-from trajectory_generators.simple_generator import SimpleGenerator
+sys.path.append(os.path.join("..", ".."))
+from models.differential_drive import DifferentialDrive # noqa
+from trajectory_generators.simple_generator import SimpleGenerator # noqa
 
 
 if __name__ == "__main__":
+    model = DifferentialDrive(wheel_base=0.53)
 
-    trajectory = SimpleGenerator()
+    trajectory = SimpleGenerator(model)
 
-    x, y, t, data = trajectory.generate("global_trajectory.csv")
+    trajectory.generate("global_trajectory.csv", nx=3, nu=2,
+                        is_derivative=True)
 
-    a_star_paths = [[1.0, 1.0], [3.0, 7.0], [8.0, 8.0]]
+    initial_paths = [(0.0, 0.0), (5.0, 0.0), (5.0, 5.0)]
 
-    euler_paths = [[1.0, 1.0], [2.738366484819262, 6.215099454457786], [3.101441758695337, 6.885088579532767], [3.8112910903771104, 7.162258218075421], [8.0, 8.0]]
+    print(trajectory.x)
+
+    print(trajectory.u)
+
+    print(trajectory.t)
+
+    dudt = np.zeros(trajectory.u.shape)
+
+    print(trajectory.u.shape)
+
+    print(dudt.shape)
+
+    for index in range(len(trajectory.t)):
+        dudt[:, index] = (trajectory.u[:, index] - trajectory.u[:, index - 1]
+                          ) / (trajectory.t[index] - trajectory.t[index - 1])
 
     figure, ax = plt.subplots()
 
     ax.set_box_aspect(1)
 
-    ax.plot(x, y)
+    ax.plot(trajectory.x[:, 0], trajectory.x[:, 1])
 
-    ax.plot([path[0] for path in euler_paths], [path[1] for path in euler_paths])
+    _, (ax1, ax2) = plt.subplots(1, 2)
 
-    ax.plot([path[0] for path in a_star_paths], [path[1] for path in a_star_paths])
-    
-    ax.set_xlabel('X')
+    ax1.plot(trajectory.t, trajectory.u[0, :])
 
-    ax.set_ylabel('Y')
+    ax2.plot(trajectory.t, trajectory.u[1, :])
 
-    ax.set_title('Trajectory Comparison')
+    _, (ax3, ax4) = plt.subplots(1, 2)
 
-    ax.legend(['Generated Trajectory', 'Euler Paths', 'A* Paths'])
+    ax3.plot(trajectory.t, dudt[0, :])
 
-    figure2, ax2 = plt.subplots()
+    ax4.plot(trajectory.t, dudt[1, :])
 
-    ax2.plot(t, data[1:, 7])
-
-    ax2.set_xlabel('Time')
-
-    ax2.set_ylabel('Path Velocity')
-
-    ax2.set_title('Path Velocity over Time')
+    print("max of dudt[1, :]: ", np.max(dudt[1, :]))
 
     plt.show()

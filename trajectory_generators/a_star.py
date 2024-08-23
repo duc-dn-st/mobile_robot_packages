@@ -1,4 +1,4 @@
-# External library 
+# External library
 from extremitypathfinder import PolygonEnvironment
 
 
@@ -8,7 +8,8 @@ class AStar:
 
         self.generator = PolygonEnvironment()
 
-        self.generator.store(self.environment.boundaries, self.environment.obstacles, validate=False)
+        self.generator.store(self.environment.boundaries,
+                             self.environment.obstacles, validate=False)
 
     def generate(self, start, end):
         path, length = self.generator.find_shortest_path(start, end)

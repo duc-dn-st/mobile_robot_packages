@@ -1,12 +1,12 @@
 
-# Standard library 
-import math 
+# Standard library
+import math
 
-# External library 
+# External library
 import numpy as np
 
 
-class DifferentialDrive: 
+class DifferentialDrive:
     # [x, y, theta]
     nx = 3
 
@@ -15,6 +15,8 @@ class DifferentialDrive:
 
     def __init__(self, wheel_base):
         self.wheel_base = wheel_base
+
+        self.velocity_max = 1.0
 
     def function(self, state, input, dt):
         v = input[0]
