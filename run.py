@@ -2,17 +2,14 @@
 from matplotlib import pyplot as plt
 
 # Internal library
-from environments.graph import Graph
 from simulators.time_stepping import TimeStepping
 from models.differential_drive import DifferentialDrive
-from controllers.purepursuit.purepursuit import PurePursuit
+from controllers.purepursuit.vfh_purpursuit import VFHPurePursuit
 from trajectory_generators.simple_generator import SimpleGenerator
 
 
 if __name__ == "__main__":
     wheel_base = 0.53
-
-    environment = Graph()
 
     model = DifferentialDrive(wheel_base)
 
@@ -21,7 +18,7 @@ if __name__ == "__main__":
     trajectory.generate("global_trajectory.csv", nx=3, nu=2,
                         is_derivative=True)
 
-    controller = PurePursuit(model, trajectory)
+    controller = VFHPurePursuit(model, trajectory)
 
     simulator = TimeStepping(model, trajectory, controller, None, t_max=120)
 

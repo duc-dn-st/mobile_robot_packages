@@ -14,6 +14,10 @@ import math
 from itertools import groupby
 from operator import itemgetter
 
+# Internal library
+from perception.vfh.polar_histogram import PolarHistogram  # noqa
+from perception.vfh.histogram_grid import HistogramGrid  # noqa
+
 
 class VectorFieldHistogram:
     """! Vector Field Histogram (VFH)
@@ -25,14 +29,10 @@ class VectorFieldHistogram:
     # ==================================================================================================
     # PUBLIC METHODS
     # ==================================================================================================
-    def __init__(self, histogram_grid, polar_histogram, robot_location,
-                 target_location, a=200, b=1, num_bins_to_consider=5,
+    def __init__(self, active_region_dimension=(8, 8), resolution=1,
+                 num_bins=36, a=200, b=1, num_bins_to_consider=5,
                  s_max=15, valley_threshold=200):
         """! Constructor
-        @param histogram_grid<HistogramGrid>: The histogram grid
-        @param polar_histogram<PolarHistogram>: The polar histogram
-        @param robot_location<tuple>: The location of the robot
-        @param target_location<tuple>: The location of the target
         @param a<float>: The parameter a
         @param b<float>: The parameter b
         @param num_bins_to_consider<int>: The number of bins to consider.
@@ -40,11 +40,12 @@ class VectorFieldHistogram:
         @param s_max<int>: The maximum number of bins in a sector
         @param valley_threshold<int>: The valley threshold
         """
-        self.polar_histogram = polar_histogram
+        self.polar_histogram = PolarHistogram(num_bins)
 
-        self.histogram_grid = histogram_grid
+        map_fname = 'map.txt'
 
-        self.set_target_location(target_location)
+        self.histogram_grid = HistogramGrid.from_map(
+            map_fname, active_region_dimension, resolution)
 
         self.a = a
 
@@ -55,10 +56,6 @@ class VectorFieldHistogram:
         self.s_max = s_max
 
         self.valley_threshold = valley_threshold
-
-        self.target_location = target_location
-
-        self.set_robot_location(robot_location)
 
     def set_target_location(self, target_discrete_location):
         """! Set the target discrete location

@@ -5,8 +5,6 @@ import math
 
 # Internal library
 sys.path.append(os.path.join("..", "..", ".."))
-from perception.vfh.polar_histogram import PolarHistogram  # noqa
-from perception.vfh.histogram_grid import HistogramGrid  # noqa
 from perception.vfh.vector_field_histogram import VectorFieldHistogram  # noqa
 
 
@@ -63,23 +61,13 @@ def step(path_planner, location, target_location, angle):
 if __name__ == "__main__":
     position = (0.0, 0.0)
 
-    active_region_dimension = (8, 8)
-
-    resolution = 1
-
-    map_fname = 'map.txt'
-
-    histogram_grid = HistogramGrid.from_map(
-        map_fname, active_region_dimension, resolution)
-
-    num_bins = 36
-
     target_location = (50, 50)
 
-    polar_histogram = PolarHistogram(num_bins)
+    path_planner = VectorFieldHistogram()
 
-    path_planner = VectorFieldHistogram(
-        histogram_grid, polar_histogram, position, target_location)
+    path_planner.set_target_location(target_location)
+
+    path_planner.set_robot_location(position)
 
     num_steps = 20
 
