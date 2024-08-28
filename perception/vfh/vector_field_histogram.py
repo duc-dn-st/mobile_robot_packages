@@ -10,6 +10,7 @@
 # Copyright (c) 2024 System Engineering Laboratory.  All rights reserved.
 
 # Standard library
+import os
 import math
 from itertools import groupby
 from operator import itemgetter
@@ -25,27 +26,36 @@ class VectorFieldHistogram:
     The class provides implementation of Vector Field Histogram (VFH) for
     perception.
     """
-
     # ==================================================================================================
     # PUBLIC METHODS
     # ==================================================================================================
-    def __init__(self, active_region_dimension=(8, 8), resolution=1,
+
+    def __init__(self, map_name, active_region_dimension=(8, 8), resolution=1,
                  num_bins=36, a=200, b=1, num_bins_to_consider=5,
                  s_max=15, valley_threshold=200):
         """! Constructor
+        @param map_name<str>: The name of the map
+        @param active_region_dimension<tuple>: The dimension of the active
+        region
+        @param resolution<float>: The resolution of the grid
+        @param num_bins<int>: The number of bins
         @param a<float>: The parameter a
         @param b<float>: The parameter b
-        @param num_bins_to_consider<int>: The number of bins to consider.
-        In the paper, it is denoted as l.
+        @param num_bins_to_consider<int>: The number of bins to consider
         @param s_max<int>: The maximum number of bins in a sector
-        @param valley_threshold<int>: The valley threshold
+        @param valley_threshold<float>: The threshold of the valley
         """
+        current_folder = os.path.dirname(os.path.abspath(__file__))
+
+        map_folder = os.path.abspath(os.path.join(
+            current_folder, '..', 'maps'))
+
         self.polar_histogram = PolarHistogram(num_bins)
 
-        map_fname = 'map.txt'
+        map_file_path = os.path.join(map_folder, map_name)
 
         self.histogram_grid = HistogramGrid.from_map(
-            map_fname, active_region_dimension, resolution)
+            map_file_path, active_region_dimension, resolution)
 
         self.a = a
 

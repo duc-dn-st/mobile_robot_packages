@@ -18,7 +18,9 @@ if __name__ == "__main__":
     trajectory.generate("global_trajectory.csv", nx=3, nu=2,
                         is_derivative=True)
 
-    controller = VFHPurePursuit(model, trajectory)
+    environment = "map.txt"
+
+    controller = VFHPurePursuit(model, trajectory, environment)
 
     simulator = TimeStepping(model, trajectory, controller, None, t_max=120)
 

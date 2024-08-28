@@ -27,10 +27,11 @@ class VFHPurePursuit(PurePursuit):
     # PUBLIC METHODS
     # ==================================================================================================
 
-    def __init__(self, model, trajectory):
+    def __init__(self, model, trajectory, environment):
         """! Constructor
         @param model<instance>: The vehicle model
         @param trajectory<instance>: The trajectory
+        @param environment<str>: The environment
         @note The trajectory is a set of waypoints.
         """
         self.model = model
@@ -45,7 +46,7 @@ class VFHPurePursuit(PurePursuit):
 
         self._w = 0.0
 
-        self._vfh = VectorFieldHistogram()
+        self._vfh = VectorFieldHistogram(environment)
 
     def initialize(self):
         """! Initialize the controller
