@@ -10,7 +10,6 @@
 # Copyright (c) 2024 System Engineering Laboratory.  All rights reserved.
 
 # Standard library
-import os
 import math
 from itertools import groupby
 from operator import itemgetter
@@ -45,17 +44,10 @@ class VectorFieldHistogram:
         @param s_max<int>: The maximum number of bins in a sector
         @param valley_threshold<float>: The threshold of the valley
         """
-        current_folder = os.path.dirname(os.path.abspath(__file__))
-
-        map_folder = os.path.abspath(os.path.join(
-            current_folder, '..', 'maps'))
-
         self.polar_histogram = PolarHistogram(num_bins)
 
-        map_file_path = os.path.join(map_folder, map_name)
-
         self.histogram_grid = HistogramGrid.from_map(
-            map_file_path, active_region_dimension, resolution)
+            map_name, active_region_dimension, resolution)
 
         self.a = a
 
