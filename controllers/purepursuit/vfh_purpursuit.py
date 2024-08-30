@@ -14,15 +14,19 @@ import math
 import numpy as np
 
 # Internal library
-from controllers.purepursuit.purepursuit import PurePursuit
 from perception.vfh.vector_field_histogram import VectorFieldHistogram
 
 
-class VFHPurePursuit(PurePursuit):
+class VFHPurePursuit:
     """! VFH Pure Pursuit
 
     The class provides implementation of VFH Pure Pursuit for controllers.
     """
+    lookahead_distance = 0.3
+
+    lookahead_gain = 0.0
+
+    k = 0.6
     # ==================================================================================================
     # PUBLIC METHODS
     # ==================================================================================================
@@ -63,7 +67,8 @@ class VFHPurePursuit(PurePursuit):
         """
         status = True
 
-        index, lookahead_distance = self._search_target_index(state, input)
+        index, lookahead_distance = self._search_target_index(
+            state, input, VFHPurePursuit.lookahead_distance)
 
         if previous_index >= index:
             index = previous_index
@@ -80,6 +85,8 @@ class VFHPurePursuit(PurePursuit):
 
             index = len(self.trajectory.x) - 1
 
+        vfh_angle = self._retrieve_vfh_angle(state, previous_index)
+
         alpha = (
             math.atan2(
                 trajectory_y - state[1],
@@ -89,7 +96,7 @@ class VFHPurePursuit(PurePursuit):
         )
 
         a = self._apply_proportional_control(
-            PurePursuit.k, self.trajectory.u[0, index], self._v
+            VFHPurePursuit.k, self.trajectory.u[0, index], self._v
         )
 
         a = self._max_acceleration if a > self._max_acceleration else a
@@ -140,10 +147,56 @@ class VFHPurePursuit(PurePursuit):
     # ==================================================================================================
     # PRIVATE METHODS
     # ==================================================================================================
-    def _search_target_index(self, state, input):
+    def _retrieve_vfh_angle(self, state, previous_index):
+        """! Retrieve the VFH angle
+        @param state<list>: The state of the vehicle
+        @param previous_index<int>: The previous index
+        @return<float>: The angle
+        """
+        index, _ = self._search_target_index(
+            state, [0, 0], 2.0)
+
+        if previous_index >= index:
+            index = previous_index
+
+        if index < len(self.trajectory.x):
+            trajectory_x = self.trajectory.x[index, 0]
+
+            trajectory_y = self.trajectory.x[index, 1]
+
+        else:
+            trajectory_x = self.trajectory.x[-1, 0]
+
+            trajectory_y = self.trajectory.x[-1, 1]
+
+            index = len(self.trajectory.x) - 1
+
+        target = [trajectory_x, trajectory_y]
+
+        self._vfh.set_robot_location(state[:2])
+
+        self._vfh.set_target_location(target)
+
+        angle = self._vfh.get_best_angle(
+            math.atan2(target[1] - state[1], target[0] - state[0])
+        )
+
+        angle = math.radians(angle)
+
+        if 2.0 < state[1] < 2.2:
+            print("state: ", state)
+
+            print("target: ", target)
+
+            print("angle: ", angle)
+
+        return angle
+
+    def _search_target_index(self, state, input, lookahead_distance):
         """! Search the target index
         @param state<list>: The state of the vehicle
         @param input<list>: The input of the vehicle
+        @param lookahead_distance<float>: The lookahead distance
         @return<tuple>: The index and lookahead distance
         """
         if self.old_nearest_point_index is None:
@@ -174,9 +227,8 @@ class VFHPurePursuit(PurePursuit):
 
         v = (input[0] + input[1]) / 2
 
-        lookahead_distance = (
-            PurePursuit.lookahead_gain * v + PurePursuit.lookahead_distance
-        )
+        lookahead_distance = VFHPurePursuit.lookahead_gain * v + \
+            lookahead_distance
 
         distance = self._calculate_distance(self.trajectory.x[index], state)
 

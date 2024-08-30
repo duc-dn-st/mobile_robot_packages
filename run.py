@@ -35,7 +35,7 @@ if __name__ == "__main__":
     map_folder = os.path.abspath(os.path.join(
         current_folder, 'perception', 'maps'))
 
-    environment = os.path.join(map_folder, 'obstacle_at_begin.txt')
+    environment = os.path.join(map_folder, 'obstacle_at_end.txt')
 
     controller = VFHPurePursuit(model, trajectory, environment)
 

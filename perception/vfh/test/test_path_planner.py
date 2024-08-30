@@ -2,6 +2,7 @@
 import os
 import sys
 import math
+from matplotlib import pyplot as plt
 
 # Internal library
 sys.path.append(os.path.join("..", "..", ".."))
@@ -63,13 +64,13 @@ if __name__ == "__main__":
 
     target_location = (50, 50)
 
-    path_planner = VectorFieldHistogram()
+    path_planner = VectorFieldHistogram("map.txt")
 
     path_planner.set_target_location(target_location)
 
     path_planner.set_robot_location(position)
 
-    num_steps = 20
+    num_steps = 100
 
     continuous_displacement = (
         target_location[0] - position[0], target_location[1] - position[1])
@@ -81,9 +82,21 @@ if __name__ == "__main__":
 
     location = position
 
+    angles = []
+
     for index in range(num_steps):
 
         angle, velocity, location = step(
             path_planner, location, target_location, angle)
 
         print("vfh angle: ", angle)
+
+        if math.sqrt((location[0] - target_location[0]) ** 2 +
+                     (location[1] - target_location[1]) ** 2) < 0.5:
+            break
+
+        angles.append(angle)
+
+    plt.plot(angles)
+
+    plt.show()

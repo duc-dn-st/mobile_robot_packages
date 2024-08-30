@@ -12,8 +12,6 @@ from perception.vfh.histogram_grid import HistogramGrid  # noqa
 
 if __name__ == "__main__":
 
-    position = (0.0, 0.0)
-
     active_region_dimension = (8, 8)
 
     resolution = 1
@@ -21,7 +19,7 @@ if __name__ == "__main__":
     map_fname = 'map.txt'
 
     histogram_grid = HistogramGrid.from_map(
-        map_fname, active_region_dimension, resolution, position)
+        map_fname, active_region_dimension, resolution)
 
     print("active region: ", histogram_grid.get_active_region((1.0, 1.0)))
 

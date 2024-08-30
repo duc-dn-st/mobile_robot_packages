@@ -29,9 +29,9 @@ class VectorFieldHistogram:
     # PUBLIC METHODS
     # ==================================================================================================
 
-    def __init__(self, map_name, active_region_dimension=(8, 8), resolution=1,
-                 num_bins=36, a=200, b=1, num_bins_to_consider=5,
-                 s_max=15, valley_threshold=200):
+    def __init__(self, map_name, active_region_dimension=(20, 20),
+                 resolution=1, num_bins=36, a=200, b=1,
+                 num_bins_to_consider=5, s_max=15, valley_threshold=200):
         """! Constructor
         @param map_name<str>: The name of the map
         @param active_region_dimension<tuple>: The dimension of the active
