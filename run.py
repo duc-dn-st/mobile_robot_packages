@@ -27,9 +27,9 @@ if __name__ == "__main__":
 
     trajectory = SimpleGenerator(model)
 
-    trajectory.generate("global_trajectory.csv", nx=3, nu=2,
-                        is_derivative=True)
-
+    trajectory.generate("rectangle_shape.csv", nx=3, nu=2,
+                        is_derivative=False)
+                        
     current_folder = os.path.dirname(os.path.abspath(__file__))
 
     map_folder = os.path.abspath(os.path.join(

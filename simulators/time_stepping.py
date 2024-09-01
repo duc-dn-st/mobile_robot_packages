@@ -109,8 +109,9 @@ class TimeStepping:
 
                 self.u_out[:, index + 1] = u_m
 
-            if self._is_goal(x_m, self.trajectory.x[-1]):
-                break
+            # For DWA, it is nessary to comment out the following lines athe moment
+            # if self._is_goal(x_m, self.trajectory.x[-1]):
+            #     break
 
         self.u_out = self.u_out[:, : index + 1]
 
