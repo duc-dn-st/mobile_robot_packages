@@ -24,4 +24,8 @@ if __name__ == "__main__":
     print("active region: ", histogram_grid.get_active_region((1.0, 1.0)))
 
     print("obstacles: ", histogram_grid.get_obstacles())
-  
+
+    angle = histogram_grid.get_angle_between_discrete_points(
+        (0, 0), (1, 1)
+    )
+    print("angle: ", angle)

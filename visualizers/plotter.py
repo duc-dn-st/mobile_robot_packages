@@ -46,6 +46,19 @@ class Plotter:
 
         self._plot_acceleration()
 
+        _, (ax, ax1, ax2) = plt.subplots(1, 3)
+
+        debug_info = np.array(self._simulator.controller._debug_info)
+
+        ax.plot(debug_info[:, 1], "r-")
+
+        ax.plot(debug_info[:, 3], "b-")
+
+        ax.plot(debug_info[:, 4], "g-")
+
+        ax1.plot(debug_info[:, 0],
+                 debug_info[:, 1], "r-")
+
         plt.show()
 
     # =========================================================================

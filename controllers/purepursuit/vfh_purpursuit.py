@@ -52,6 +52,10 @@ class VFHPurePursuit:
 
         self._vfh = VectorFieldHistogram(environment)
 
+        self._debug = True
+
+        self._debug_info = []
+
     def initialize(self):
         """! Initialize the controller
         @note The method is used to initialize the controller.
@@ -87,11 +91,12 @@ class VFHPurePursuit:
 
         vfh_angle = self._retrieve_vfh_angle(state, previous_index)
 
+        angle = math.atan2(trajectory_y - state[1], trajectory_x - state[0])
+
+        angle = angle if abs(angle - vfh_angle) < math.pi / 2 else vfh_angle
+
         alpha = (
-            math.atan2(
-                trajectory_y - state[1],
-                trajectory_x - state[0],
-            )
+            vfh_angle
             - state[2]
         )
 
@@ -175,20 +180,15 @@ class VFHPurePursuit:
 
         self._vfh.set_robot_location(state[:2])
 
-        self._vfh.set_target_location(target)
-
-        angle = self._vfh.get_best_angle(
-            math.atan2(target[1] - state[1], target[0] - state[0])
-        )
+        angle = self._vfh.get_best_angle(target)
 
         angle = math.radians(angle)
 
-        if 2.0 < state[1] < 2.2:
-            print("state: ", state)
+        angle = np.arctan2(np.sin(angle), np.cos(angle))
 
-            print("target: ", target)
-
-            print("angle: ", angle)
+        if self._debug:
+            self._debug_info.append(
+                (trajectory_x, trajectory_y, state[0], state[1], angle))
 
         return angle
 

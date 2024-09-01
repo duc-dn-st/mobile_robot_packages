@@ -63,7 +63,8 @@ class HistogramGrid:
 
         hg = cls(dimension, resolution, active_region_dimension)
 
-        hg.histogram_grid = lines
+        hg.histogram_grid = lines[::-1]
+
         return hg
 
     def continuous_point_to_discrete_point(self, continuous_point):
@@ -116,11 +117,14 @@ class HistogramGrid:
         @param discrete_end<tuple>: The end point
         @return float: The angle
         """
-        ang1 = np.arctan2(*discrete_start[::-1])
+        angle = math.atan2(
+            discrete_end[1] - discrete_start[1],
+            discrete_end[0] - discrete_start[0]
+        )
 
-        ang2 = np.arctan2(*discrete_end[::-1])
+        angle = np.arctan2(np.sin(angle), np.cos(angle))
 
-        return np.rad2deg((ang1 - ang2) % (2 * np.pi))
+        return np.rad2deg(angle)
 
     def get_active_region(self, robot_location):
         """! Returns the active region of the histogram grid
@@ -148,36 +152,20 @@ class HistogramGrid:
 
         return active_region
 
-    def get_target_discrete_location(self):
-        """! Returns the target discrete location
-        @return tuple: The target discrete location
-        """
-        return self.target_discrete_location
-
-    def set_target_discrete_location(self, target_discrete_location):
-        """! Set the target discrete location
-        @param target_discrete_location<tuple>: The target discrete location
-        """
-        self.target_discrete_location = target_discrete_location
-
     def get_obstacles(self):
         """! Returns the obstacles
         @return tuple: The obstacles
         """
-        obstacles_points_x = []
-
-        obstacles_points_y = []
+        obstacles = []
 
         for row_idx, row in enumerate(self.histogram_grid):
             for col_idx, cell in enumerate(row):
                 if cell == 0:
                     continue
 
-                obstacles_points_x.append(col_idx)
+                obstacles.append((row_idx, col_idx))
 
-                obstacles_points_y.append(row_idx)
-
-        return obstacles_points_x, obstacles_points_y
+        return obstacles
 
     # ==================================================================================================
     # PRIVATE METHODS

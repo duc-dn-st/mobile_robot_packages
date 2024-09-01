@@ -11,6 +11,7 @@
 
 # Standard library
 import math
+import numpy as np
 from itertools import groupby
 from operator import itemgetter
 
@@ -29,9 +30,9 @@ class VectorFieldHistogram:
     # PUBLIC METHODS
     # ==================================================================================================
 
-    def __init__(self, map_name, active_region_dimension=(20, 20),
+    def __init__(self, map_name, active_region_dimension=(8, 8),
                  resolution=1, num_bins=36, a=200, b=1,
-                 num_bins_to_consider=5, s_max=15, valley_threshold=200):
+                 num_bins_to_consider=5, s_max=5, valley_threshold=50):
         """! Constructor
         @param map_name<str>: The name of the map
         @param active_region_dimension<tuple>: The dimension of the active
@@ -59,25 +60,22 @@ class VectorFieldHistogram:
 
         self.valley_threshold = valley_threshold
 
-    def set_target_location(self, target_discrete_location):
-        """! Set the target discrete location
-        @param target_discrete_location<tuple>: The location of the target
-        """
-        self.histogram_grid.set_target_discrete_location(
-            target_discrete_location)
-
     def set_robot_location(self, robot_location):
         """! Set the robot location
         @param robot_location<tuple>: The location of the robot
         """
+        self.robot_location = robot_location
+
         self._generate_histogram(robot_location)
 
-    def get_best_angle(self, continuous_angle):
+    def get_best_angle(self, target_location):
         """! Get the best angle
-        @param continuous_angle<float>: The angle between the robot and
-        the target
+        @param target_location<tuple>: The location of the target
         @return float: The best angle
         """
+        target_sector, continuous_angle = self._calculate_sector_to_target(
+            target_location)
+
         sectors = self._get_sectors()
 
         if len(sectors) == 0:
@@ -91,12 +89,14 @@ class VectorFieldHistogram:
             return middle_angle
 
         if len(sectors) == 1:
-            return continuous_angle / math.pi * 180
+            return self._calculate_angle_by_sector(
+                sectors[0], target_sector)
 
         angles = []
 
         for sector in sectors:
-            angle = self._calculate_angle_by_sector(sector, continuous_angle)
+            angle = self._calculate_angle_by_sector(
+                sector, target_sector)
 
             angles.append(angle)
 
@@ -116,10 +116,13 @@ class VectorFieldHistogram:
         """! Generate the histogram
         @param robot_location<tuple>: The location of the robot
         """
+        discrete_location = self.histogram_grid.\
+            continuous_point_to_discrete_point(robot_location)
+
         self.polar_histogram.reset()
 
         min_x, min_y, max_x, max_y = self.histogram_grid.get_active_region(
-            robot_location)
+            discrete_location)
 
         histogram_grid = self.histogram_grid
 
@@ -133,13 +136,13 @@ class VectorFieldHistogram:
                     node_considered)
 
                 distance = histogram_grid.get_distance_between_discrete_points(
-                    node_considered, robot_location)
+                    node_considered, discrete_location)
 
                 delta_certainty = (certainty ** 2) * \
                     (self.a - self.b * distance)
 
                 angle = histogram_grid.get_angle_between_discrete_points(
-                    robot_location, node_considered)
+                    discrete_location, node_considered)
 
                 if delta_certainty != 0:
                     polar_histogram.add_certainty_to_bin_at_angle(
@@ -151,9 +154,17 @@ class VectorFieldHistogram:
         """! Get the filtered polar histogram
         @return list: The filtered polar histogram
         """
-        return [bin_index for bin_index, certainty in enumerate(
+        return [(bin_index, certainty) for bin_index, certainty in enumerate(
             self.polar_histogram._polar_histogram
         ) if certainty < self.valley_threshold]
+
+    def _group_sectors(self, polar_histogram):
+        """! Group the sectors
+        @param polar_histogram<list>: The polar histogram
+        @return list: The sectors
+        """
+        return [list(group) for _, group in groupby(
+            polar_histogram, key=lambda x: x[0] - polar_histogram[0][0])]
 
     def _get_sectors_from_filtered_polar_histogram(
             self, filtered_polar_histogram):
@@ -161,8 +172,16 @@ class VectorFieldHistogram:
         @param filtered_polar_histogram<list>: The filtered polar histogram
         @return list: The sectors from the filtered polar histogram
         """
-        return [list(map(itemgetter(1), g)) for _, g in groupby(enumerate(
-            filtered_polar_histogram), lambda ix: ix[0] - ix[1])]
+        groups = [list(group) for _, group in groupby(
+            [(bin_index, certainty) for bin_index, certainty in
+             filtered_polar_histogram],
+            key=lambda x, c=iter(range(1000)): next(c) - x[0]
+        )]
+
+        sectors = [[bin_index for bin_index, _ in group]
+                   for group in groups]
+
+        return sectors
 
     def _get_sectors(self):
         """! Get the sectors
@@ -175,10 +194,33 @@ class VectorFieldHistogram:
 
         return sectors
 
-    def _calculate_angle_by_sector(self, sector, continuous_angle):
+    def _calculate_sector_to_target(self, target_location):
+        """! Calculate the angle to the target
+        @param target_location<tuple>: The location of the target
+        @return float: The angle
+        """
+        position = self.robot_location
+
+        continuous_displacement = (
+            target_location[0] - position[0], target_location[1] - position[1])
+
+        continuous_robot_to_target_angle = math.atan2(
+            continuous_displacement[1], continuous_displacement[0])
+
+        continuous_robot_to_target_angle = np.arctan2(
+            np.sin(continuous_robot_to_target_angle),
+            np.cos(continuous_robot_to_target_angle)
+        )
+
+        bin_index = self.polar_histogram._get_bin_index_from_angle(
+            np.rad2deg(continuous_robot_to_target_angle))
+
+        return bin_index, continuous_robot_to_target_angle
+
+    def _calculate_angle_by_sector(self, sector, target_sector):
         """! Calculate the angle by sector
         @param sector<list>: The sector
-        @param continuous_angle<float>: The angle between the robot and
+        @param target_sector<list>: The target sector
         @return float: The angle
         @note The angle is calculated by the sector, if the sector is wide,
         the angle is calculated by the closest bin to the target direction,
@@ -186,18 +228,16 @@ class VectorFieldHistogram:
         The wideness of the sector by absolutes difference between the first
         and last bin of the sector.
         """
+        if target_sector in sector:
+            return self.polar_histogram.get_middle_angle_of_bin(target_sector)
+
         if len(sector) > self.s_max:
-            if abs(sector[0] - continuous_angle) > abs(
-                    sector[-1] - continuous_angle):
-                k_n = 0
+            k_n = min(
+                sector, key=lambda k: abs(k - target_sector))
 
-                k_f = k_n + self.s_max - 1
+            k_f = k_n + self.s_max if k_n > target_sector else k_n - self.s_max
 
-            else:
-                k_n = len(sector) - 1
-
-                k_f = k_n - self.s_max + 1
-
+            k_f = self.polar_histogram._wrap(k_f)
         else:
             k_n = sector[0]
 
