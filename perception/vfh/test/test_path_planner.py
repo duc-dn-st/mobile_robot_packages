@@ -53,7 +53,7 @@ def step(path_planner, location, target_location, angle):
     angle = update_angle(path_planner, target_location)
     # set_speed() # speed: Null (or optionally, t-1) => t
     print("robot: step: best angle =", angle)
-    velocity = update_velocity(angle, 1)
+    velocity = update_velocity(angle, 0.5)
     print("robot: step: velocity =", velocity)
     location = update_location(
         path_planner, angle, velocity, location)  # position: t => t+1
@@ -65,7 +65,7 @@ def _plot_obstacles(ax):
     """! Plot the obstacles.
     @param ax The axis object.
     """
-    resolution = 1
+    resolution = 0.125
 
     with open("map.txt", 'r') as f:
         reader = csv.reader(f, delimiter=" ")
@@ -91,9 +91,9 @@ def _plot_obstacles(ax):
 
 
 if __name__ == "__main__":
-    position = (40, 0.0)
+    position = (4, 0.0)
 
-    target_location = (0.0, 50)
+    target_location = (0.0, 4)
 
     path_planner = VectorFieldHistogram("map.txt")
 
@@ -115,7 +115,7 @@ if __name__ == "__main__":
             path_planner, location, target_location, angle)
 
         if math.sqrt((location[0] - target_location[0]) ** 2 +
-                     (location[1] - target_location[1]) ** 2) < 0.5:
+                     (location[1] - target_location[1]) ** 2) < 0.1:
             break
 
         locations.append(location)
