@@ -5,7 +5,7 @@ from matplotlib import pyplot as plt
 from environments.graph import Graph
 from simulators.time_stepping import TimeStepping
 from models.differential_drive import DifferentialDrive
-from controllers.purepursuit.purepursuit import PurePursuit
+from controllers.dwa import DynamicWindowApproach
 from trajectory_generators.simple_generator import SimpleGenerator
 
 
@@ -18,12 +18,13 @@ if __name__ == "__main__":
 
     trajectory = SimpleGenerator(model)
 
-    trajectory.generate("global_trajectory.csv", nx=3, nu=2,
-                        is_derivative=True)
+    trajectory.generate("rectangle_shape.csv", nx=3, nu=2,
+                        is_derivative=False)
+                        
 
-    controller = PurePursuit(model, trajectory)
+    controller = DynamicWindowApproach(model, trajectory)
 
-    simulator = TimeStepping(model, trajectory, controller, None, t_max=120)
+    simulator = TimeStepping(model, trajectory, controller, None, t_max=150)
 
     simulator.run(0.0)
 
@@ -31,7 +32,7 @@ if __name__ == "__main__":
 
     ax1.set_box_aspect(1)
 
-    print("simulator.x_out: ", simulator.x_out[:, -2])
+    # print("simulator.x_out: ", simulator.x_out[:, -2])
 
     ax1.plot(simulator.x_out[0, :], simulator.x_out[1, :], "r",
              label="Tracking performance")
