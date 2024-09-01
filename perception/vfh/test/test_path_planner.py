@@ -2,37 +2,42 @@
 import os
 import sys
 import math
-
-sys.path.append(os.path.join("..","..",".."))
-
+import csv
+import numpy as np
+from matplotlib import pyplot as plt
+from matplotlib.patches import Rectangle
 
 # Internal library
-from perception.vfh.path_planner import PathPlanner
-from perception.vfh.histogram_grid import HistogramGrid
-from perception.vfh.polar_histogram import PolarHistogram
+sys.path.append(os.path.join("..", "..", ".."))
+from perception.vfh.vector_field_histogram import VectorFieldHistogram  # noqa
 
 
 def update_location(path_planner, angle, velocity, location):
-    angle_radian = angle * math.pi/180
+    # angle_radian = angle * math.pi/180
     velocity_x, velocity_y = velocity
 
     old_x, old_y = location
     location = (old_x + velocity_x, old_y + velocity_y)
 
-    # Why does path_planner need discrete location?
-    discrete_location = path_planner.histogram_grid.continuous_point_to_discrete_point(location)
-    print("robot: discrete_location =", discrete_location)
-    path_planner.set_robot_location(discrete_location)
+    print("robot: location =", location)
+
+    path_planner.set_robot_location(location)
 
     return location
 
-def update_angle(path_planner, location, target_location):
-    continuous_displacement = (target_location[0] - location[0], target_location[1] - location[1])
-    continuous_robot_to_target_angle = math.atan2(continuous_displacement[1], continuous_displacement[0])
-    angle = path_planner.get_best_angle(continuous_robot_to_target_angle)
-    continuous_robot_to_target_angle = continuous_robot_to_target_angle
+
+def update_angle(path_planner, target_location):
+    """! Get the best angle
+    @param location<tuple>: The location of the robot
+    @param target_location<tuple>: The target location
+    @return<float>: The best angle
+    """
+    angle = path_planner.get_best_angle(target_location)
+
+    print("robot: update_angle: best angle =", angle)
 
     return angle
+
 
 def update_velocity(angle, speed):
     angle_radian = angle * math.pi/180
@@ -41,48 +46,92 @@ def update_velocity(angle, speed):
 
     return velocity
 
+
 def step(path_planner, location, target_location, angle):
     # path_planner.print_histogram()
-    angle = update_angle(path_planner, location, target_location) # angle: Null (or optionally, t-1) => t
+    # angle: Null (or optionally, t-1) => t
+    angle = update_angle(path_planner, target_location)
     # set_speed() # speed: Null (or optionally, t-1) => t
     print("robot: step: best angle =", angle)
-    velocity = update_velocity(angle, 1.0)
-    
-    location = update_location(path_planner, angle, velocity, location) # position: t => t+1
-
+    velocity = update_velocity(angle, 1)
+    print("robot: step: velocity =", velocity)
+    location = update_location(
+        path_planner, angle, velocity, location)  # position: t => t+1
+    print("robot: step: location =", location)
     return angle, velocity, location
 
 
+def _plot_obstacles(ax):
+    """! Plot the obstacles.
+    @param ax The axis object.
+    """
+    resolution = 1
+
+    with open("map.txt", 'r') as f:
+        reader = csv.reader(f, delimiter=" ")
+
+        lines = list(reader)
+
+    lines = list(map(lambda line: list(map(int, line)), lines))
+
+    array = np.array(lines)
+
+    for row in range(array.shape[0]):
+        for column in range(array.shape[1]):
+            if array[row, column] != 1:
+                continue
+
+            x = column * resolution
+
+            y = (array.shape[0] - row - 1) * resolution
+
+            rect = Rectangle((x, y), resolution, resolution, facecolor='black')
+
+            ax.add_patch(rect)
+
+
 if __name__ == "__main__":
-    position = (0.0, 0.0)
+    position = (40, 0.0)
 
-    active_region_dimension = (8, 8)
+    target_location = (0.0, 50)
 
-    resolution = 1 
+    path_planner = VectorFieldHistogram("map.txt")
 
-    map_fname = 'map.txt'
-
-    histogram_grid = HistogramGrid.from_map(map_fname, active_region_dimension, resolution, position)
-
-    num_bins = 36 
-
-    target_location = (50, 50)
-
-    polar_histogram = PolarHistogram(num_bins)
-
-    path_planner = PathPlanner(histogram_grid, polar_histogram, position, target_location)
+    path_planner.set_robot_location(position)
 
     num_steps = 100
 
-    continuous_displacement = (target_location[0] - position[0], target_location[1] - position[1])
+    angle = path_planner.get_best_angle(target_location)
 
-    continuous_robot_to_target_angle = math.atan2(continuous_displacement[1], continuous_displacement[0])
+    location = position
 
-    angle = path_planner.get_best_angle(continuous_robot_to_target_angle)
+    angles = []
+
+    locations = [position]
 
     for index in range(num_steps):
 
-        angle, velocity, location = step(path_planner, position, target_location, angle)
+        angle, velocity, location = step(
+            path_planner, location, target_location, angle)
 
-        print("vfh angle: ", angle)
+        if math.sqrt((location[0] - target_location[0]) ** 2 +
+                     (location[1] - target_location[1]) ** 2) < 0.5:
+            break
 
+        locations.append(location)
+
+        angles.append(angle)
+
+    locations = np.array(locations)
+
+    _, ax = plt.subplots()
+    
+    ax.plot(locations[:, 0], locations[:, 1], 'ro-')
+
+    _, ax_angle = plt.subplots()
+
+    ax_angle.plot(angles, 'r')
+
+    _plot_obstacles(ax)
+
+    plt.show()

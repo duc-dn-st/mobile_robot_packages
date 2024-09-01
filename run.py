@@ -1,18 +1,27 @@
+#!/usr/bin/env python3
+##
+# @file run.py
+#
+# @brief Provide plotting functions for the system.
+#
+# @section author_doxygen_example Author(s)
+# - Created by Tran Viet Thanh on 27/08/2024.
+#
+# Copyright (c) 2024 System Engineering Laboratory.  All rights reserved.
+
 # Standard library
-from matplotlib import pyplot as plt
+import os
 
 # Internal library
-from environments.graph import Graph
+from visualizers.plotter import Plotter
 from simulators.time_stepping import TimeStepping
 from models.differential_drive import DifferentialDrive
-from controllers.dwa import DynamicWindowApproach
+from controllers.purepursuit.vfh_purpursuit import VFHPurePursuit
 from trajectory_generators.simple_generator import SimpleGenerator
 
 
 if __name__ == "__main__":
     wheel_base = 0.53
-
-    environment = Graph()
 
     model = DifferentialDrive(wheel_base)
 
@@ -21,53 +30,19 @@ if __name__ == "__main__":
     trajectory.generate("rectangle_shape.csv", nx=3, nu=2,
                         is_derivative=False)
                         
+    current_folder = os.path.dirname(os.path.abspath(__file__))
 
-    controller = DynamicWindowApproach(model, trajectory)
+    map_folder = os.path.abspath(os.path.join(
+        current_folder, 'perception', 'maps'))
 
-    simulator = TimeStepping(model, trajectory, controller, None, t_max=150)
+    environment = os.path.join(map_folder, 'obstacle_at_end.txt')
+
+    controller = VFHPurePursuit(model, trajectory, environment)
+
+    simulator = TimeStepping(model, trajectory, controller, None, t_max=120)
+
+    plotter = Plotter(simulator, trajectory, environment)
 
     simulator.run(0.0)
 
-    _, ax1 = plt.subplots(1, 1)
-
-    ax1.set_box_aspect(1)
-
-    # print("simulator.x_out: ", simulator.x_out[:, -2])
-
-    ax1.plot(simulator.x_out[0, :], simulator.x_out[1, :], "r",
-             label="Tracking performance")
-
-    ax1.plot(
-        [path[0] for path in trajectory.x],
-        [path[1] for path in trajectory.x],
-        "--b", label="Trajectory",
-    )
-    ax1.legend()
-    ax1.set_xlabel("X [m]")
-    ax1.set_ylabel("Y [m]")
-    plt.tight_layout()
-    _, (ax2, ax3) = plt.subplots(1, 2)
-
-    ax2.plot(simulator.t_out[:len(simulator.u_out[0, :])],
-             simulator.u_out[0, :])
-
-    ax3.plot(simulator.t_out[:len(simulator.u_out[0, :])],
-             simulator.u_out[1, :])
-    
-    ax2.set_xlabel("Time [s]")
-    ax2.set_ylabel("Velocity [m/s]")
-    ax3.set_xlabel("Time [s]")
-    ax3.set_ylabel("Angular Velocity [rad/s]")
-    plt.tight_layout()
-    _, (ax4, ax5) = plt.subplots(1, 2)
-
-    ax4.plot(simulator.t_out, simulator.dudt_out[0, :])
-
-    ax4.set_xlabel("Time [s]")
-    ax4.set_ylabel("Acceleration [m/s^2]")
-
-    ax5.plot(simulator.t_out, simulator.dudt_out[1, :])
-    ax5.set_xlabel("Time [s]")
-    ax5.set_ylabel("Angular Acceleration [rad/s^2]")
-    plt.tight_layout()
-    plt.show()
+    plotter.plot()
