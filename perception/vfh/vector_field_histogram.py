@@ -31,7 +31,7 @@ class VectorFieldHistogram:
     # ==================================================================================================
 
     def __init__(self, map_name, active_region_dimension=(8, 8),
-                 resolution=1, num_bins=36, a=200, b=1,
+                 resolution=0.125, num_bins=36, a=200, b=1,
                  num_bins_to_consider=5, s_max=5, valley_threshold=50):
         """! Constructor
         @param map_name<str>: The name of the map
@@ -90,13 +90,13 @@ class VectorFieldHistogram:
 
         if len(sectors) == 1:
             return self._calculate_angle_by_sector(
-                sectors[0], target_sector)
+                sectors[0], target_sector, continuous_angle)
 
         angles = []
 
         for sector in sectors:
             angle = self._calculate_angle_by_sector(
-                sector, target_sector)
+                sector, target_sector, continuous_angle)
 
             angles.append(angle)
 
@@ -199,13 +199,9 @@ class VectorFieldHistogram:
         @param target_location<tuple>: The location of the target
         @return float: The angle
         """
-        position = self.robot_location
-
-        continuous_displacement = (
-            target_location[0] - position[0], target_location[1] - position[1])
-
         continuous_robot_to_target_angle = math.atan2(
-            continuous_displacement[1], continuous_displacement[0])
+            target_location[1] - self.robot_location[1],
+            target_location[0] - self.robot_location[0])
 
         continuous_robot_to_target_angle = np.arctan2(
             np.sin(continuous_robot_to_target_angle),
@@ -217,10 +213,12 @@ class VectorFieldHistogram:
 
         return bin_index, continuous_robot_to_target_angle
 
-    def _calculate_angle_by_sector(self, sector, target_sector):
+    def _calculate_angle_by_sector(
+            self, sector, target_sector, continuous_angle):
         """! Calculate the angle by sector
         @param sector<list>: The sector
         @param target_sector<list>: The target sector
+        @param continuous_angle<float>: The continuous angle
         @return float: The angle
         @note The angle is calculated by the sector, if the sector is wide,
         the angle is calculated by the closest bin to the target direction,
@@ -229,7 +227,7 @@ class VectorFieldHistogram:
         and last bin of the sector.
         """
         if target_sector in sector:
-            return self.polar_histogram.get_middle_angle_of_bin(target_sector)
+            return continuous_angle
 
         if len(sector) > self.s_max:
             k_n = min(
@@ -246,4 +244,4 @@ class VectorFieldHistogram:
         angle = (self.polar_histogram.get_middle_angle_of_bin(
             k_n) + self.polar_histogram.get_middle_angle_of_bin(k_f)) / 2
 
-        return angle
+        return np.deg2rad(angle)

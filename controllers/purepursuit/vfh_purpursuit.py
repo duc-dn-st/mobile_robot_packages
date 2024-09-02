@@ -10,7 +10,6 @@
 # Copyright (c) 2024 System Engineering Laboratory.  All rights reserved.
 
 # Standard library
-import math
 import numpy as np
 
 # Internal library
@@ -22,7 +21,7 @@ class VFHPurePursuit:
 
     The class provides implementation of VFH Pure Pursuit for controllers.
     """
-    lookahead_distance = 0.3
+    lookahead_distance = 2.0
 
     lookahead_gain = 0.0
 
@@ -89,11 +88,8 @@ class VFHPurePursuit:
 
             index = len(self.trajectory.x) - 1
 
-        vfh_angle = self._retrieve_vfh_angle(state, previous_index)
-
-        angle = math.atan2(trajectory_y - state[1], trajectory_x - state[0])
-
-        angle = angle if abs(angle - vfh_angle) < math.pi / 2 else vfh_angle
+        vfh_angle = self._retrieve_vfh_angle(
+            state, [trajectory_x, trajectory_y])
 
         alpha = (
             vfh_angle
@@ -110,12 +106,13 @@ class VFHPurePursuit:
 
         w = self._v * 2.0 * alpha / lookahead_distance
 
-        dwdt = min(
-            max((w - self._w) / self.trajectory.sampling_time, -0.030), 0.033)
+        # dwdt = min(
+        #     max((w - self._w) / self.trajectory.sampling_time, -0.030),
+        # 0.033)
 
-        w = self._w + dwdt * self.trajectory.sampling_time
+        # w = self._w + dwdt * self.trajectory.sampling_time
 
-        self._w = w
+        # self._w = w
 
         return status, [self._v, w]
 
@@ -152,43 +149,19 @@ class VFHPurePursuit:
     # ==================================================================================================
     # PRIVATE METHODS
     # ==================================================================================================
-    def _retrieve_vfh_angle(self, state, previous_index):
+    def _retrieve_vfh_angle(self, state, target):
         """! Retrieve the VFH angle
         @param state<list>: The state of the vehicle
-        @param previous_index<int>: The previous index
+        @param target<list>: The target
         @return<float>: The angle
         """
-        index, _ = self._search_target_index(
-            state, [0, 0], 2.0)
-
-        if previous_index >= index:
-            index = previous_index
-
-        if index < len(self.trajectory.x):
-            trajectory_x = self.trajectory.x[index, 0]
-
-            trajectory_y = self.trajectory.x[index, 1]
-
-        else:
-            trajectory_x = self.trajectory.x[-1, 0]
-
-            trajectory_y = self.trajectory.x[-1, 1]
-
-            index = len(self.trajectory.x) - 1
-
-        target = [trajectory_x, trajectory_y]
-
         self._vfh.set_robot_location(state[:2])
 
         angle = self._vfh.get_best_angle(target)
 
-        angle = math.radians(angle)
-
-        angle = np.arctan2(np.sin(angle), np.cos(angle))
-
         if self._debug:
             self._debug_info.append(
-                (trajectory_x, trajectory_y, state[0], state[1], angle))
+                (target[0], target[1], state[0], state[1], angle))
 
         return angle
 
