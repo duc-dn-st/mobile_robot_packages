@@ -11,13 +11,15 @@
 
 # Standard library
 import os
+import sys
 
 # Internal library
-from visualizers.plotter import Plotter
-from simulators.time_stepping import TimeStepping
-from models.differential_drive import DifferentialDrive
-from controllers.purepursuit.vfh_purpursuit import VFHPurePursuit
-from trajectory_generators.simple_generator import SimpleGenerator
+sys.path.append('..')
+from visualizers.plotter import Plotter  # noqa
+from simulators.time_stepping import TimeStepping  # noqa
+from models.differential_drive import DifferentialDrive  # noqa
+from controllers.purepursuit.vfh_purpursuit import VFHPurePursuit  # noqa
+from trajectory_generators.simple_generator import SimpleGenerator  # noqa
 
 
 if __name__ == "__main__":
@@ -29,11 +31,11 @@ if __name__ == "__main__":
 
     trajectory.generate("global_trajectory.csv", nx=3, nu=2,
                         is_derivative=True)
-
+       
     current_folder = os.path.dirname(os.path.abspath(__file__))
 
     map_folder = os.path.abspath(os.path.join(
-        current_folder, 'perception', 'maps'))
+        current_folder, '..', 'perception', 'maps'))
 
     environment = os.path.join(map_folder, 'obstacle_at_end.txt')
 
