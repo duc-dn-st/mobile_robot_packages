@@ -1,24 +1,22 @@
 #!/usr/bin/env python3
 ##
-# @file run.py
+# @file dwa_with_l_shape.py
 #
-# @brief Provide plotting functions for the system.
+# @brief Provide example for DWA tracking L-shape trajectory.
 #
 # @section author_doxygen_example Author(s)
 # - Created by Tran Viet Thanh on 27/08/2024.
-#
-# Copyright (c) 2024 System Engineering Laboratory.  All rights reserved.
 
 # Standard library
-import os
 import sys
+
 
 # Internal library
 sys.path.append('..')
 from visualizers.plotter import Plotter  # noqa
+from controllers.dwa import DynamicWindowApproach  # noqa
 from simulators.time_stepping import TimeStepping  # noqa
 from models.differential_drive import DifferentialDrive  # noqa
-from controllers.purepursuit.vfh_purpursuit import VFHPurePursuit  # noqa
 from trajectory_generators.simple_generator import SimpleGenerator  # noqa
 
 
@@ -32,18 +30,11 @@ if __name__ == "__main__":
     trajectory.generate("global_trajectory.csv", nx=3, nu=2,
                         is_derivative=True)
 
-    current_folder = os.path.dirname(os.path.abspath(__file__))
-
-    map_folder = os.path.abspath(os.path.join(
-        current_folder, '..', 'perception', 'maps'))
-
-    environment = os.path.join(map_folder, 'obstacle_at_end.txt')
-
-    controller = VFHPurePursuit(model, trajectory, environment)
+    controller = DynamicWindowApproach(model, trajectory)
 
     simulator = TimeStepping(model, trajectory, controller, None, t_max=120)
 
-    plotter = Plotter(simulator, trajectory, environment)
+    plotter = Plotter(simulator, trajectory)
 
     simulator.run(0.0)
 

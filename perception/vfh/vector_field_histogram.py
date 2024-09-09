@@ -32,7 +32,7 @@ class VectorFieldHistogram:
 
     def __init__(self, map_name, active_region_dimension=(8, 8),
                  resolution=0.125, num_bins=36, a=200, b=1,
-                 num_bins_to_consider=5, s_max=5, valley_threshold=50):
+                 num_bins_to_consider=5, s_max=4, valley_threshold=10):
         """! Constructor
         @param map_name<str>: The name of the map
         @param active_region_dimension<tuple>: The dimension of the active
@@ -109,9 +109,33 @@ class VectorFieldHistogram:
 
         return best_angle
 
+    def get_densities(self, target_location):
+        """! Get the densities
+        @param target_location<tuple>: The location of the target
+        @return list: The densities
+        """
+        target_sector, _ = self._calculate_sector_to_target(target_location)
+
+        #   neighbor_sectors = self._get_neighbor_sectors(target_sector)
+
+        densities = []
+
+        return densities
+
     # ==================================================================================================
     # PRIVATE METHODS
     # ==================================================================================================
+    def _get_neighbor_sectors(self, target_sector):
+        """! Get the neighbor sectors
+        @param target_sector<int>: The target sector
+        @return list: The neighbor sectors
+        """
+        neighbor_sectors = []
+
+        for sector in self._get_sectors():
+            if target_sector in sector:
+                neighbor_sectors.append(sector)
+
     def _generate_histogram(self, robot_location):
         """! Generate the histogram
         @param robot_location<tuple>: The location of the robot

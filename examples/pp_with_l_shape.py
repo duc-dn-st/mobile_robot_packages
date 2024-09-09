@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 ##
-# @file run.py
+# @file pp_with_l_shape.py
 #
 # @brief Provide plotting functions for the system.
 #
@@ -18,7 +18,7 @@ sys.path.append('..')
 from visualizers.plotter import Plotter  # noqa
 from simulators.time_stepping import TimeStepping  # noqa
 from models.differential_drive import DifferentialDrive  # noqa
-from controllers.purepursuit.vfh_purpursuit import VFHPurePursuit  # noqa
+from controllers.purepursuit.purepursuit import PurePursuit  # noqa
 from trajectory_generators.simple_generator import SimpleGenerator  # noqa
 
 
@@ -37,9 +37,9 @@ if __name__ == "__main__":
     map_folder = os.path.abspath(os.path.join(
         current_folder, '..', 'perception', 'maps'))
 
-    environment = os.path.join(map_folder, 'obstacle_at_end.txt')
+    environment = ''
 
-    controller = VFHPurePursuit(model, trajectory, environment)
+    controller = PurePursuit(model, trajectory)
 
     simulator = TimeStepping(model, trajectory, controller, None, t_max=120)
 
