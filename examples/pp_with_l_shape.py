@@ -29,7 +29,7 @@ if __name__ == "__main__":
 
     trajectory = SimpleGenerator(model)
 
-    trajectory.generate("global_trajectory.csv", nx=3, nu=2,
+    trajectory.generate("global_trajectory_3.0.csv", nx=3, nu=2,
                         is_derivative=True)
 
     current_folder = os.path.dirname(os.path.abspath(__file__))

@@ -29,7 +29,7 @@ if __name__ == "__main__":
     ax.plot(trajectory.x[:, 0], trajectory.x[:, 1], 'r',
             label='Corner angle 80 degrees')
 
-    trajectory.generate("global_trajectory_4.csv", nx=3, nu=2,
+    trajectory.generate("global_trajectory_4.0.csv", nx=3, nu=2,
                         is_derivative=True)
 
     ax.plot(trajectory.x[:, 0], trajectory.x[:, 1], 'b',
@@ -40,6 +40,12 @@ if __name__ == "__main__":
 
     ax.plot(trajectory.x[:, 0], trajectory.x[:, 1], 'g',
             label='Corner angle 60 degrees')
+
+    trajectory.generate("global_trajectory_3.0.csv", nx=3, nu=2,
+                        is_derivative=True)
+
+    ax.plot(trajectory.x[:, 0], trajectory.x[:, 1], 'g',
+            label='Corner angle 50 degrees')
 
     ax.legend()
 
