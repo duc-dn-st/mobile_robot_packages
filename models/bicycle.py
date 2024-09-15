@@ -58,3 +58,18 @@ class Bicycle:
         next_state[3] = math.atan2(w * self.lengh_base, v) if v != 0 else 0
 
         return next_state
+
+    def calculate_front_alxe(self, state, input):
+        """! Calculate the front axle
+        @param state<list>: The state of the vehicle
+        @return front_axle<list>: The front axle of the vehicle
+        """
+        v = input[0]
+
+        w = input[1]
+
+        delta = math.atan2(w * self.lengh_base, v) if v != 0 else 0
+
+        v_front = v / math.cos(delta)
+
+        return np.array([v_front, delta])
