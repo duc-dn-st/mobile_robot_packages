@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 ##
-# @file differential_drive.py
+# @file bicycle.py
 #
-# @brief Provide implementation of the differential drive model.
+# @brief Provide implementation of the bicycle model.
 #
 # @section author_doxygen_example Author(s)
-# - Created by Tran Viet Thanh on 27/08/2024.
+# - Created by Tran Viet Thanh on 2024/09/16.
 #
 # Copyright (c) 2024 System Engineering Laboratory.  All rights reserved.
 
@@ -16,24 +16,24 @@ import math
 import numpy as np
 
 
-class DifferentialDrive:
-    """! Differential drive model
+class Bicycle:
+    """! Bicycle model
 
-    The class provides implementation of the differential drive model.
+    The class provides implementation of the bicycle model.
     @note The model is used to simulate the vehicle motion.
-    @variable nx: The number of states. The states are [x, y, theta]
+    @variable nx: The number of states. The states are [x, y, theta, delta]
     @variable nu: The number of inputs. The inputs are [v, w]
     """
-    nx = 3
+    nx = 4
 
     nu = 2
 
-    def __init__(self, wheel_base):
+    def __init__(self, lengh_base):
         """! Constructor
         @param wheel_base<float>: The wheel base of the vehicle
         @note The wheel base is the distance between the front and rear axles.
         """
-        self.wheel_base = wheel_base
+        self.lengh_base = lengh_base
 
         self.velocity_max = 1.0
 
@@ -48,8 +48,13 @@ class DifferentialDrive:
 
         w = input[1]
 
-        dfdt = np.array([math.cos(state[2]) * v, math.sin(state[2]) * v, w])
+        dfdt = np.array([v * math.cos(state[2]),
+                         v * math.sin(state[2]),
+                         w,
+                         0])
 
         next_state = state + dfdt * dt
+
+        next_state[3] = math.atan2(w * self.lengh_base, v) if v != 0 else 0
 
         return next_state
