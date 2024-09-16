@@ -10,6 +10,9 @@ class FeedForward:
     def execute(self, state, input, index):
         status = True
 
+        if index >= len(self.trajectory.t):
+            return False, [0.0, 0.0]
+
         u = self.trajectory.u[:, index]
 
         return status, u
