@@ -44,25 +44,26 @@ class Bicycle:
         @param dt<float>: The time step
         @return next_state<list>: The next state of the vehicle
         """
-        v = input[0]
+        v_front = input[0]
 
-        w = input[1]
+        delta = input[1]
 
-        dfdt = np.array([v * math.cos(state[2]),
-                         v * math.sin(state[2]),
-                         w,
-                         0])
+        dfdt = np.array([v_front * math.cos(state[2] + state[3]),
+                         v_front * math.sin(state[2] + state[3]),
+                        (v_front / self.lengh_base) * math.sin(state[3]),
+                        0.0])
 
         next_state = state + dfdt * dt
 
-        next_state[3] = math.atan2(w * self.lengh_base, v) if v != 0 else 0
+        next_state[3] = delta
 
         return next_state
 
     def calculate_front_alxe(self, state, input):
         """! Calculate the front axle
-        @param state<list>: The state of the vehicle
+        @param input<list>: The input of the vehicle
         @return front_axle<list>: The front axle of the vehicle
+        @note for v and w is the velocity and angular velocity of the rear axle
         """
         v = input[0]
 

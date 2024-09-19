@@ -41,7 +41,7 @@ if __name__ == "__main__":
 
     trajectory = SimpleGenerator(model)
 
-    trajectory.generate("global_trajectory_1s.csv", nx=3, nu=2,
+    trajectory.generate("loop_square_1s.csv", nx=3, nu=2,
                         is_derivative=True)
 
     figure, ax = plt.subplots()
@@ -56,7 +56,7 @@ if __name__ == "__main__":
 
     ax2.plot(trajectory.t, trajectory.u[1, :])
 
-    file_path = os.path.join(trajectory._data_folder, "bicycle_trajectory.csv")
+    file_path = os.path.join(trajectory._data_folder, "loop_square_bicycle.csv")
     
     _save_trajectories(file_path, trajectory)
 

@@ -17,8 +17,6 @@ import numpy as np
 class TimeStepping:
     t_start = 0
 
-    dt = 0.05
-
     # ==================================================================
     # PUBLIC METHODS
     # ==================================================================
@@ -53,14 +51,18 @@ class TimeStepping:
 
         self._t_max = t_max
 
+        self._dt = 0.05
+
     def run(self, q0):
         """! Run the time stepping
         @param q0<list>: The initial state
         """
+        print(self._dt)
+
         self.t_out = np.linspace(
             TimeStepping.t_start,
             self._t_max,
-            int((1 / TimeStepping.dt) * self._t_max),
+            int((1 / self._dt) * self._t_max),
         )
 
         nt = self.t_out.shape[-1]
@@ -91,13 +93,13 @@ class TimeStepping:
                 y_m, u_m, index)
 
             if not status:
-                self.u_out[:, index] = np.zeros([self.model.nu, 1])
+                self.u_out[:, index] = np.zeros([self.model.nu, 1]).reshape(-1)
 
             self.dudt_out[:, index] = (
-                u_m - self.u_out[:, index]) / TimeStepping.dt
+                u_m - self.u_out[:, index]) / self._dt
 
             x_m = self.model.function(
-                self.x_out[:, index], self.u_out[:, index], TimeStepping.dt
+                self.x_out[:, index], self.u_out[:, index], self._dt
             )
 
             y_m = x_m
