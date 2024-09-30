@@ -4,7 +4,7 @@ import math
 
 # External library
 import numpy as np
-
+import casadi as cs
 
 class DifferentialDrive:
     # [x, y, theta]
@@ -26,6 +26,17 @@ class DifferentialDrive:
         w = input[1]
 
         dfdt = np.array([math.cos(state[2]) * v, math.sin(state[2]) * v, w])
+
+        next_state = state + dfdt * dt
+
+        return next_state
+    
+    def casadi_function(self, state, input, dt):
+        v = input[0]
+
+        w = input[1]
+
+        dfdt = cs.vertcat(cs.cos(state[2]) * v, cs.sin(state[2]) * v, w)
 
         next_state = state + dfdt * dt
 
