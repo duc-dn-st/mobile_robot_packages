@@ -24,7 +24,7 @@ class Bicycle:
     @variable nx: The number of states. The states are [x, y, theta, delta]
     @variable nu: The number of inputs. The inputs are [v, w]
     """
-    nx = 4
+    nx = 3
 
     nu = 2
 
@@ -44,23 +44,25 @@ class Bicycle:
         @param dt<float>: The time step
         @return next_state<list>: The next state of the vehicle
         """
+
+        theta = state[2]
+
         v_front = input[0]
 
         delta = input[1]
 
-        dfdt = np.array([v_front * math.cos(state[2] + state[3]),
-                         v_front * math.sin(state[2] + state[3]),
-                        (v_front / self.lengh_base) * math.sin(state[3]),
-                        0.0])
+        dfdt = np.array([v_front * math.cos(delta) * math.cos(theta),
+                         v_front * math.cos(delta) * math.sin(theta),
+                        (v_front / self.lengh_base) * math.sin(delta)])
 
         next_state = state + dfdt * dt
 
-        next_state[3] = delta
-
         return next_state
 
-    def calculate_front_alxe(self, state, input):
+    def calculate_front_axle(self, state, input):
         """! Calculate the front axle
+        This function transforms the rear axle velocity and angular velocity (v, w) 
+        to the front axle velocity and steering angle (v_front, delta).
         @param input<list>: The input of the vehicle
         @return front_axle<list>: The front axle of the vehicle
         @note for v and w is the velocity and angular velocity of the rear axle
@@ -74,3 +76,18 @@ class Bicycle:
         v_front = v / math.cos(delta)
 
         return np.array([v_front, delta])
+    
+    def calculate_front_position(self, state, input):
+
+        x_rear = state[0]
+
+        y_rear = state[1]
+
+        theta = state[2]
+
+        x_front = x_rear + self.lengh_base * math.cos(theta)
+
+        y_front = y_rear + self.lengh_base * math.sin(theta)
+
+        return np.array([x_front, y_front])
+    
