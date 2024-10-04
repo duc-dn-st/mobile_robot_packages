@@ -13,6 +13,6 @@ class FeedForward:
         if index >= len(self.trajectory.t):
             return False, [0.0, 0.0]
 
-        u = self.trajectory.u[:, index]
+        u = self.trajectory.u[index, :]
 
         return status, u
