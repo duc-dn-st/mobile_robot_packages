@@ -7,6 +7,9 @@ services:
     container_name: trajectory_generator
     volumes:
       - "./:/root/catkin_ws/src/"
+    build:
+      context: .
+      dockerfile: ./Dockerfile
     privileged: True
     stdin_open: True
     command: bash
