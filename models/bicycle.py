@@ -67,11 +67,6 @@ class Bicycle:
         @return front_axle<list>: The front axle of the vehicle
         @note for v and w is the velocity and angular velocity of the rear axle
         """
-
-        print("state: ", state)
-
-        print("input: ", input)
-
         v = input[0]
 
         w = input[1]
@@ -79,8 +74,6 @@ class Bicycle:
         delta = math.atan2(w * self.lengh_base, v) if v != 0 else 0
 
         v_front = v / math.cos(delta)
-
-        print("v_front: ", v_front, "delta: ", delta)
 
         return np.array([v_front, delta])
     
