@@ -59,7 +59,7 @@ class Bicycle:
 
         return next_state
 
-    def calculate_front_axle(self, state, input):
+    def calculate_front_axle_velocity(self, state, input):
         """! Calculate the front axle
         This function transforms the rear axle velocity and angular velocity (v, w) 
         to the front axle velocity and steering angle (v_front, delta).
@@ -67,6 +67,11 @@ class Bicycle:
         @return front_axle<list>: The front axle of the vehicle
         @note for v and w is the velocity and angular velocity of the rear axle
         """
+
+        print("state: ", state)
+
+        print("input: ", input)
+
         v = input[0]
 
         w = input[1]
@@ -75,9 +80,11 @@ class Bicycle:
 
         v_front = v / math.cos(delta)
 
+        print("v_front: ", v_front, "delta: ", delta)
+
         return np.array([v_front, delta])
     
-    def calculate_front_position(self, state, input):
+    def calculate_front_axle_position(self, state, input):
 
         x_rear = state[0]
 
