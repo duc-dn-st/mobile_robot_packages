@@ -30,7 +30,7 @@ In global_trajectory.cpp :
 
 - Changed:
     - choosing L shape waypoint : (0,0) , (5,0) , (5,5)
-    
+
 In global_trajectory.h :
 - change SAMPLING_TIME : (Line 63) To 1 second
 - change PATH_ACC_LIM : (Line 77) Increase PATH_ACC_LIM so that the velocity can be bigger
@@ -38,5 +38,5 @@ In global_trajectory.h :
 - Changed :
     - SAMPLING_TIME : 0.05 -> 1
     - Investigate PATH_ACC_LIM : Erase "0.5" factor
-    - GEAR RATIO : 40.0 -> 50.0 -> 100.0
+    - GEAR RATIO : 40.0 -> 50.0 -> 100.0 (THIS FIXED THE PROBLEM)
 

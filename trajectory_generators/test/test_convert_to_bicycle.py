@@ -21,7 +21,7 @@ def _save_trajectories(file_name, trajectory):
         file.write("Time [s], x [m], y [m], theta [rad], v_rear [m/s], w_rear [rad/s], v_front [m/s], delta [rad]\n")
 
         for index in range(len(trajectory.t)):
-            v_front, delta = trajectory._model.calculate_front_axle(
+            v_front, delta = trajectory._model.calculate_front_axle_velocity(
                 trajectory.x[index, :], trajectory.u[:, index])
 
             file.write("{}, {}, {}, {}, {}, {}, {}, {}\n".format(
@@ -41,7 +41,7 @@ if __name__ == "__main__":
 
     trajectory = SimpleGenerator(model)
 
-    trajectory.generate("global_trajectory_1s.csv", nx=3, nu=2,
+    trajectory.generate("uturn_1s.csv", nx=3, nu=2,
                         is_derivative=True)
 
     figure, ax = plt.subplots()
@@ -66,7 +66,7 @@ if __name__ == "__main__":
 
     plt.tight_layout()
 
-    file_path = os.path.join(trajectory._data_folder, "bicycle_global_trajectory_1s.csv")
+    file_path = os.path.join(trajectory._data_folder, "bicycle_uturn_1s.csv")
     
     _save_trajectories(file_path, trajectory)
 
