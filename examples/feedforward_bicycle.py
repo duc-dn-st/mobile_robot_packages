@@ -31,7 +31,7 @@ if __name__ == "__main__":
 
     trajectory = SimpleGenerator(model)
 
-    trajectory.generate("bicycle_l_shape_1s.csv", nx=3, nu=2,
+    trajectory.generate("bicycle_global_trajectory.csv", nx=3, nu=2,
                         is_derivative=False)
 
     current_folder = os.path.dirname(os.path.abspath(__file__))
@@ -47,7 +47,7 @@ if __name__ == "__main__":
 
     plotter = Plotter(simulator, trajectory, environment)
 
-    simulator._dt = 1.0
+    simulator._dt = 0.05
 
     simulator.run([0.0, 0.0, 0.0])
 
