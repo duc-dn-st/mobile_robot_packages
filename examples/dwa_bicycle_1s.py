@@ -14,7 +14,7 @@ import math
 # Internal library
 sys.path.append('..')
 from visualizers.plotter import Plotter  # noqa
-from controllers.dwa_bicycle import DynamicWindowApproach  # noqa
+from controllers.dwa.dwa_bicycle import DynamicWindowApproach  # noqa
 from simulators.time_stepping import TimeStepping  # noqa
 from models.bicycle import Bicycle  # noqa
 from trajectory_generators.simple_generator import SimpleGenerator  # noqa

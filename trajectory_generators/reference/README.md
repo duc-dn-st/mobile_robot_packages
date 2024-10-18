@@ -40,3 +40,14 @@ In global_trajectory.h :
     - Investigate PATH_ACC_LIM : Erase "0.5" factor
     - GEAR RATIO : 40.0 -> 50.0 -> 100.0 (THIS FIXED THE PROBLEM)
 
+
+
+## INCREASE TURNING RADIUS 
+
+Line 359
+
+    epsilon(i) = epsilon_min + 0.1
+
+    - increase 0.1 -> increase turning radius
+
+    Test : +0.4, bicycle model is able to turn with length_base = 1m
