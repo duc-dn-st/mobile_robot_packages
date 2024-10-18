@@ -99,8 +99,8 @@ namespace ControlConstants
 
 namespace TrajectoryParameters
 {
-    constexpr double PATH_VEL_LIM  = 0.1;
-    constexpr double PATH_VEL_MIN = 0.05;
+    constexpr double PATH_VEL_LIM  = 0.5;
+    constexpr double PATH_VEL_MIN = 0.1;
 }
 
 namespace GeneralFunctions

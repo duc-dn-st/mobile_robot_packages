@@ -23,9 +23,10 @@ Global_traj_class::Global_traj_class(ros::NodeHandle nh, ros::NodeHandle private
         {
             if (goal_nodes_.empty())
             {
-                default_way_points.resize(2, 2);
-                default_way_points << 5.0, 0,
-                                      5.0 , 5.0;
+                default_way_points.resize(3, 2);
+                default_way_points << 0.0, 5.0,
+                                      -5.0 , 5.0,
+                                      -5.0 , 0.0;
 
                 for (unsigned int ii = 0; ii < default_way_points.rows(); ii++)
                 {
@@ -355,6 +356,11 @@ void Global_traj_class::euler_spiral_corner_smoothing_solver() {
 
         ////DEBUGGED added part//// -N
         if(theta_end_local > MathConstants::PI)
+        {
+            theta_end_local = GeneralFunctions::wrapToPi(theta_end_local);
+        }
+
+        if (theta_end_local < -MathConstants::PI)
         {
             theta_end_local = GeneralFunctions::wrapToPi(theta_end_local);
         }

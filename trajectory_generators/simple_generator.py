@@ -59,7 +59,8 @@ class SimpleGenerator:
         @return u<list>: The input
         """
         if not is_derivative:
-            u = np.array(data[initial_index:, 1 + nx: 1 + nx + nu])
+
+            u = np.array(data[initial_index:, 1 + nx + 2 : 1 + nx + nu + 2])
 
         else:
             u = np.zeros((self._model.nu, len(data) - initial_index))

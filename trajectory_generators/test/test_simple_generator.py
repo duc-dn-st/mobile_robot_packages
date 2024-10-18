@@ -16,7 +16,7 @@ if __name__ == "__main__":
 
     trajectory = SimpleGenerator(model)
 
-    trajectory.generate("global_trajectory.csv", nx=3, nu=2,
+    trajectory.generate("loop_square_bicycle.csv", nx=3, nu=2,
                         is_derivative=True)
 
     initial_paths = [(0.0, 0.0), (5.0, 0.0), (5.0, 5.0)]
