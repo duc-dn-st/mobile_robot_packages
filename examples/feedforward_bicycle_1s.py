@@ -13,6 +13,7 @@
 import os
 import sys
 import numpy as np
+import math
 
 # Internal library
 sys.path.append('..')
@@ -24,13 +25,13 @@ from trajectory_generators.simple_generator import SimpleGenerator
 
 
 if __name__ == "__main__":
-    wheel_base = 0.53
+    wheel_base = 1.0
 
     model = Bicycle(wheel_base)
 
     trajectory = SimpleGenerator(model)
 
-    trajectory.generate("loop_square_bicycle.csv", nx=3, nu=2,
+    trajectory.generate("bicycle_l_shape_ep0.25_1s.csv", nx=3, nu=2,
                         is_derivative=False)
 
     current_folder = os.path.dirname(os.path.abspath(__file__))
@@ -42,12 +43,12 @@ if __name__ == "__main__":
 
     controller = FeedForward(model, trajectory)
 
-    simulator = TimeStepping(model, trajectory, controller, None, t_max=75)
+    simulator = TimeStepping(model, trajectory, controller, None, t_max=trajectory.t[-1]+1)
 
     plotter = Plotter(simulator, trajectory, environment)
 
     simulator._dt = 1.0
 
-    simulator.run([0.0, 0.0, np.pi/2, 0.0])
+    simulator.run([0.0, 0.0, 0.0])
 
     plotter.plot()
