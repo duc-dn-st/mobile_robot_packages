@@ -11,7 +11,6 @@
 # Standard library
 import math
 import numpy as np
-import matplotlib.pyplot as plt
 
 
 class DynamicWindowApproach:
@@ -35,7 +34,7 @@ class DynamicWindowApproach:
 
         self._register_DWA_specification()
 
-    # ==================================================================================================
+    # =================================================================================================
     # PUBLIC METHODS
     # =================================================================================================
 
@@ -54,22 +53,13 @@ class DynamicWindowApproach:
         """
         status = True
 
-        goal_distance = math.sqrt(
-            (self._goal[0] - state[0])**2 + (self._goal[1] - state[1])**2)
+        if self._is_goal(state, self.trajectory):
+            
+            return False, [0, 0]
 
-        if goal_distance <= self._goal_tolerance:
+        goal = self._search_target_index(state)
 
-            self._goal_index += 1
-
-        if self._goal_index >= len(self.trajectory.x):
-
-            u = [0.0, 0.0]
-
-            return status, u
-
-        self._goal = self.trajectory.x[self._goal_index]
-
-        u = self._execute_dwa_control(state, self._goal, input)
+        u = self._execute_dwa_control(state, goal, input)
 
         return status, u
 
@@ -81,49 +71,90 @@ class DynamicWindowApproach:
         """! Register the model specification
         @note The method is used to register the model specification.
         """
-        # Max and min velocity
-        self._max_speed = self.model.velocity_max # [m/s]
+        self._min_speed = 0.0
 
-        self._delta_max = self._convert_degrees_to_radians(40.0) # [rad]
+        self._max_speed = self.model.velocity_max
 
-        self._delta_min = self._convert_degrees_to_radians(-40.0) # [rad]
+        self._delta_min = math.radians(-40.0)
 
-        # Max and min acceleration
-        self._max_acceleration = self.model.velocity_max # [m/s^2]
+        self._delta_max = math.radians(40.0)
 
-        self._max_delta_dot = self._convert_degrees_to_radians(20) # [rad/s]
+        self._max_acceleration = 2.0
 
-        # Resolution
+        self._max_delta_dot = math.radians(80)
 
-        self._v_resolution = 0.1 # [m/s]
+        self._v_resolution = 0.1
 
-        self._delta_resolution = self._convert_degrees_to_radians(1.0) # [rad]
+        self._delta_resolution = math.radians(1.0)
 
     def _register_DWA_specification(self):
         """! Register the DWA specification
         @note The method is used to register the DWA specification.
-        @ self._lookahead_time : minimum look ahead time : 
-            1->3 : well for precise tracking , 
-            5->10 : better anticipation of obstacles and smoother motion in faster
+        @ self._lookahead_time : minimum look ahead time :
+            1->3 : well for precise tracking ,
+            5->10 : better anticipation of obstacles and smoother motion
         """
         self._dt = self.trajectory.sampling_time
 
-        self._lookahead_time = 3 * self._dt 
+        self._lookahead_steps = 2
 
-        # NOTE : TUNING LATER 
-        self._orientation_to_goal_cost_gain = 0.5
- 
-        self._speed_cost_gain = 0.5
+        self._lookahead_time = self._lookahead_steps * self._dt
 
-        self._goal_index = 1
+        self._to_goal_cost_gain = 1.0
 
-        self._goal = self.trajectory.x[self._goal_index]
+        self._speed_cost_gain = 1.0
 
-        # NOTE : NOT SURE
-        # self._goal_tolerance = (self._max_speed * self._dt) 
+        self._goal_tolerance = 0.3
 
-        self._goal_tolerance = 0.5 
+    def _find_nearest_waypoint(self, state):
+        """! Get the nearest waypoint
+        @param state<list>: The state of the vehicle
+        @param index<int>: The previous index
+        """
+        dx = [state[0] - ref_x for ref_x in self.trajectory.x[:, 0]]
 
+        dy = [state[1] - ref_y for ref_y in self.trajectory.x[:, 1]]
+
+        d = [math.sqrt(idx ** 2 + idy ** 2) for (idx, idy) in zip(dx, dy)]
+
+        min_d = min(d)
+
+        nearest_index = d.index(min_d)
+
+        return nearest_index
+
+    def _search_target_index(self, state):
+        """! Get the tracking goal
+        @param state<list>: The state of the vehicle
+        """
+        self.idx = self._find_nearest_waypoint(state)
+
+        goal = self.trajectory.x[self.idx]
+
+        goal_distance = self._calculate_distance(state, goal)
+
+        while goal_distance <= self._goal_tolerance:
+
+            if self.idx + 1 < len(self.trajectory.x):
+
+                self.idx += 1
+
+            else:
+                break
+
+            goal = self.trajectory.x[self.idx]
+
+            goal_distance = self._calculate_distance(state, goal)
+
+        if self.idx + self._lookahead_steps < len(self.trajectory.x):
+
+            goal = self.trajectory.x[self.idx + self._lookahead_steps]
+
+        else:
+
+            goal = self.trajectory.x[-1]
+
+        return goal
 
     def _execute_dwa_control(self, state, goal, input):
         """! This function is used to calculate the control.
@@ -133,16 +164,16 @@ class DynamicWindowApproach:
         """
         dw = self._calculate_dynamic_window(input)
 
-        u = self._calculate_control_and_trajectory(state, dw, goal)
+        [v, delta] = self._calculate_control(state, input, dw, goal)
 
-        return u
+        return [v, delta]
 
     def _calculate_dynamic_window(self, input):
         """! This function is used to calculate the dynamic window.
         @param state<list>: The state of the vehicle.
         @param input<list>: The input of the vehicle.
         """
-        Vs = [0, self._max_speed,
+        Vs = [self._min_speed, self._max_speed,
               self._delta_min, self._delta_max]
 
         Vd = [input[0] - self._max_acceleration * self._dt,
@@ -150,51 +181,48 @@ class DynamicWindowApproach:
               input[1] - self._max_delta_dot * self._dt,
               input[1] + self._max_delta_dot * self._dt]
 
-        dw = [max(Vs[0], Vd[0]), min(Vs[1], Vd[1]),
-              max(Vs[2], Vd[2]), min(Vs[3], Vd[3])]
+        dw = [max(Vs[0], Vd[0]),
+              min(Vs[1], Vd[1]),
+              max(Vs[2], Vd[2]),
+              min(Vs[3], Vd[3])]
 
         return dw
 
-    def _calculate_control_and_trajectory(self, state, dw, goal):
-        """! This function is used to calculate the control and trajectory.
+    def _calculate_control(self, state, input, dw, goal):
+        """! This function is used to calculate the control input
         The best control of all sample is the one that minimize the cost
         function.
-        Cost function = goal_cost + speed_cost
-
         @param state<list>: The state of the vehicle.
+        @param input<list>: The input of the vehicle.
         @param dw<list>: The dynamic window.
         @param goal<list>: The goal of current step.
         """
         min_cost = float("inf")
 
-        best_u = [0.0, 0.0]
-
-        best_trajectory = None
-
         for v in np.arange(dw[0], dw[1], self._v_resolution):
 
             for delta in np.arange(dw[2], dw[3], self._delta_resolution):
 
-                input = [v, delta]
+                lookahead_trajectory = self._predict_trajectory(
+                    state, [v, delta])
 
-                trajectory = self._predict_trajectory(state, input)
+                to_goal_cost = self._to_goal_cost_gain * \
+                    self._calculate_to_goal_cost(lookahead_trajectory, goal)
 
-                orientation_to_goal_cost = self._orientation_to_goal_cost_gain * \
-                    self._calculate_orientation_to_goal_cost(trajectory, goal)
+                speed_cost = self._speed_cost_gain * \
+                    self._calculate_speed_cost([v, delta])
 
-                speed_cost = self._speed_cost_gain * (self._max_speed - v)
-
-                final_cost = speed_cost + orientation_to_goal_cost
+                final_cost = speed_cost + to_goal_cost
 
                 if min_cost >= final_cost:
 
                     min_cost = final_cost
 
-                    best_u = input
+                    best_v = v
+                    
+                    best_delta = delta
 
-                    best_trajectory = trajectory
-
-        return best_u
+        return [best_v, best_delta]
 
     def _predict_trajectory(self, state, input):
         """! This function uses the kinematic model.
@@ -217,8 +245,8 @@ class DynamicWindowApproach:
             time += self._dt
 
         return trajectory
-    
-    def _calculate_orientation_to_goal_cost(self, predict_trajectory, goal):
+
+    def _calculate_to_goal_cost(self, predict_trajectory, goal):
         """! This function is used to calculate the goal cost.
         @param trajectory<list>: The trajectory of the vehicle.
         @param goal<list>: The goal of current step.
@@ -228,63 +256,41 @@ class DynamicWindowApproach:
         error_angle = math.atan2(dy, dx)
         cost_angle = error_angle - predict_trajectory[-1, 2]
         cost = abs(math.atan2(math.sin(cost_angle), math.cos(cost_angle)))
-
         return cost
 
-    def _calculate_tracking_error_cost(self, state, goal):
+    def _calculate_speed_cost(self, input):
         """! This function is used to calculate the goal cost.
-        @param trajectory<list>: The trajectory of the vehicle.
-        @param goal<list>: The goal of current step.
         """
-        dx = goal[0] - state[0]
-        dy = goal[1] - state[1]
-        error_distance = math.sqrt(dx**2 + dy**2)
-        cost = error_distance
+        speed_cost = (self._max_speed - input[0])
 
-        return cost
+        return speed_cost
 
     # ==================================================================================================
-    # OTHER METHODS
+    # STATIC METHODS
     # ==================================================================================================
-    def find_lookahead_index(robot_pos, trajectory, lookahead_distance):
-        # Calculate the distance from the robot to each waypoint in the trajectory
-        lookahead_distance = 0.5
-        for i in range(len(trajectory)):
-            dx = trajectory[i, 0] - robot_pos[0]
-            dy = trajectory[i, 1] - robot_pos[1]
-            distance = math.sqrt(dx**2 + dy**2)
-            
-            # Find the first waypoint that is at least lookahead_distance away
-            if distance >= lookahead_distance:
-                return i
-        
-        # If no such waypoint is found, return the last index
-        return len(trajectory) - 1
-
-    def _find_nearest_waypoint(self, state, index, update_prev_idx=False):
-        """! Get the nearest waypoint
+    @staticmethod
+    def _is_goal(state, trajectory):
+        """! Check if the vehicle has reached the goal
         @param state<list>: The state of the vehicle
-        @param index<int>: The previous index
-        @param update_prev_idx<bool>: The flag to update the previous index
+        @param trajectory<instance>: The trajectory
+        @return<bool>: The flag to indicate if the vehicle has reached the goal
         """
-        SEARCH_IDX_LEN = 200
+        delta_x = trajectory.x[-1, 0] - state[0]
 
-        dx = [state[0] - ref_x for ref_x in self.trajectory.x[index:(index + SEARCH_IDX_LEN), 0]]
+        delta_y = trajectory.x[-1, 1] - state[1]
 
-        dy = [state[1] - ref_y for ref_y in self.trajectory.x[index:(index + SEARCH_IDX_LEN), 1]]
+        distance = np.hypot(delta_x, delta_y)
 
-        d = [math.sqrt(idx ** 2 + idy ** 2) for (idx, idy) in zip(dx, dy)]
+        return distance < 0.1
 
-        min_d = min(d)
-
-        nearest_idx = d.index(min_d) + index
-
-        return nearest_idx
-
-    def _convert_degrees_to_radians(self, degrees):
-        """! Convert degrees to radians
-        @param degrees<float>: The angle in degrees
+    @staticmethod
+    def _calculate_distance(state, reference):
+        """! Calculate the distance to the goal
+        @param state<list>: The state of the vehicle
+        @param goal<list>: The goal of current step
         """
-        radians = degrees * (math.pi / 180)
+        dx = reference[0] - state[0]
 
-        return radians
+        dy = reference[1] - state[1]
+
+        return math.hypot(dx, dy)
