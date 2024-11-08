@@ -14,7 +14,7 @@ import math
 
 # External library
 import numpy as np
-
+import casadi as cs
 
 class DifferentialDrive:
     """! Differential drive model
@@ -37,6 +37,8 @@ class DifferentialDrive:
 
         self.velocity_max = 1.0
 
+        self.angular_velocity_max = 1.0
+
     def function(self, state, input, dt):
         """! Compute the next state
         @param state<list>: The current state of the vehicle
@@ -53,3 +55,34 @@ class DifferentialDrive:
         next_state = state + dfdt * dt
 
         return next_state
+
+    def casadi_function(self, state, input, dt):
+        v = input[0]
+
+        w = input[1]
+
+        dfdt = cs.vertcat(cs.cos(state[2]) * v, cs.sin(state[2]) * v, w)
+
+        next_state = state + dfdt * dt
+
+        return next_state
+
+    def get_state_space_matrices(self, state, input, dt):
+        """! Get the state space matrices by Jacobian linearization
+        @param state<list>: The state of the vehicle
+        @param input<list>: The input of the vehicle
+        @param dt<float>: The time step
+        @return A, B<tuple>: The state space matrices
+        """
+
+        v = input[0]
+
+        A = np.array([[1, 0, -math.sin(state[2]) * v * dt],
+                      [0, 1, math.cos(state[2]) * v * dt],
+                      [0, 0, 1]])
+
+        B = np.array([[math.cos(state[2]) * dt, 0],
+                      [math.sin(state[2]) * dt, 0],
+                      [0, dt]])
+
+        return A, B
