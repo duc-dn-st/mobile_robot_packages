@@ -26,7 +26,6 @@ class LinearModelPredictiveControl:
     controller for autonomous driving.
     @note The controller is used to follow a trajectory.
     """
-
     def __init__(self, model, trajectory):
         """! Constructor
         @param model<instance>: The vehicle model
@@ -53,8 +52,6 @@ class LinearModelPredictiveControl:
         """! Initialize the controller
         @note The method is used to initialize the controller.
         """
-        self.H = self._set_stage_cost()
-
         pass
 
     def execute(self, state, input, index):
@@ -98,15 +95,15 @@ class LinearModelPredictiveControl:
         @param state<list>: The state of the vehicle.
         @param index
         """
-        z = cp.Variable(self._nx * (self._predict_step + 1) +
-                        self._nu * self._predict_step)
+        z = cp.Variable(self._nx * (self._predict_step + 1) + self._nu * self._predict_step)
+
+        H = self._set_stage_cost()
 
         current_idx = self._get_nearest_waypoint(state[0], state[1], index)
 
         # current_idx = index
 
         if current_idx > len(self.trajectory.x) - self._predict_step:
-            current_idx = len(self.trajectory.x) - self._predict_step
 
         state_ref = self.trajectory.x[current_idx:current_idx +
                                       self._predict_step]
@@ -118,22 +115,19 @@ class LinearModelPredictiveControl:
 
         A_in, B_in = self._set_inquality_constraints()
 
-        object = cp.Minimize((1/2)*cp.quad_form(z, self.H))
+        object = cp.Minimize((1/2)*cp.quad_form(z, H))
 
-        constraints = [(A_in @ z)[:, np.newaxis] <= B_in,
-                       (A_eq @ z)[:, np.newaxis] == B_eq]
+        constraints = [(A_in @ z)[:, np.newaxis] <= B_in, (A_eq @ z)[:, np.newaxis] == B_eq]
 
-        constraints += [z[0:self._nx] ==
-                        (state - self.trajectory.x[current_idx])]
+        constraints += [z[0:self._nx] == (state - self.trajectory.x[current_idx])]
 
         constraints += [z[self._nx*(self._predict_step+1):self._nx*(self._predict_step+1)+self._nu] == 0]
-
+        
         optimization_problem = cp.Problem(object, constraints)
 
         optimization_problem.solve()
 
-        state_sol = z.value[0:self._nx*(self._predict_step+1)
-                            ].reshape((self._predict_step + 1, self._nx))
+        state_sol = z.value[0:self._nx*(self._predict_step+1)].reshape((self._predict_step + 1, self._nx))
 
         input_sol = z.value[self._nx*(self._predict_step+1):].reshape((self._predict_step, self._nu))
 
@@ -144,10 +138,11 @@ class LinearModelPredictiveControl:
         @param state<list>: The state of the vehicle.
         @param goal<list>: The goal of current step.
         @param input<list>: The input of the vehicle.
-        """
+        """ 
         Q = np.diag([100.0, 100.0, 0.01])
 
         R = np.diag([0.001, 0.001])
+        
 
         Q_stacked = block_diag(*([Q] * (self._predict_step+1)))
 
@@ -158,79 +153,88 @@ class LinearModelPredictiveControl:
         return H
 
     def _set_inquality_constraints(self):
-        """! This function is used to set the inquality constraints.
-        @return A_in, B_in
-        @NOTE: G * z <= h
-        G is the matrix of the inequality constraints
-        G covers the constraints on the input of 2 control inputs
-        h is the vector of the inequality constraints
+        """! 
         """
-        G = np.matrix([[1, 0, -1, 0],
-                       [-1, 0, 1, 0],
-                       [0, 1, 0, -1],
+
+        G = np.matrix([[1, 0, -1, 0], 
+                       [-1, 0, 1, 0], 
+                       [0, 1, 0, -1], 
                        [0, -1, 0, 1]])
+        
+        # h = np.matrix([[self.model.velocity_max],
+        #             [self.model.velocity_max],
+        #             [self.model.angular_velocity_max],
+        #             [self.model.angular_velocity_max]])
 
-        h = np.matrix([[self.model.velocity_max],
-                    [self.model.velocity_max],
-                    [self.model.angular_velocity_max],
-                    [self.model.angular_velocity_max]])
-
-        A_in = np.zeros((0, (self._predict_step+1)*self._nx +
-                        self._predict_step*self._nu))
+        h = np.matrix([[self.trajectory.sampling_time * 1.0],
+                [self.trajectory.sampling_time * 1.0],
+                [self.trajectory.sampling_time * 1.0],
+                [self.trajectory.sampling_time * 1.0]])
+        
+        A_in = np.zeros((0, (self._predict_step+1)*self._nx + self._predict_step*self._nu))
 
         B_in = np.zeros((0, 1))
 
         for i in range(self._predict_step-1):
 
-            A_temp = np.hstack((np.zeros([G.shape[0], self._nx*(self._predict_step+1)]), np.zeros(
-                [G.shape[0], i*self._nu]),  G, np.zeros([G.shape[0], self._predict_step*self._nu - G.shape[1] - i*self._nu])))
-
+            A_temp = np.hstack((np.zeros([G.shape[0] , self._nx*(self._predict_step+1)]), np.zeros([G.shape[0],i*self._nu]),  G, np.zeros([G.shape[0], self._predict_step*self._nu - G.shape[1] - i*self._nu])))
+    
             A_in = np.vstack((A_in, A_temp))
 
             B_in = np.vstack((B_in, h))
-
+        
         return A_in, B_in
-
+        
     def _set_equality_constraints(self, state_ref, input_ref):
-        """! This function is used to set the equality constraints.
-        @param state_ref<list>: The reference state of the vehicle.
-        @param input_ref<list>: The reference input of the vehicle.
-        @return A_eq, B_eq
-        """
-        A_eq = np.zeros(
-            (0, self._nx * (self._predict_step+1) + self._nu * self._predict_step))
-
+        
+        A_eq = np.zeros((0, self._nx * (self._predict_step+1) + self._nu * self._predict_step))
+        
         B_eq = np.zeros((self._nx * (self._predict_step), 1))
 
         for i in range(self._predict_step):
 
-            A_d, B_d = self.model.get_state_space_matrices(
-                state_ref[i], input_ref[i], self.trajectory.sampling_time)
+            A_d, B_d = self.model.get_state_space_matrices(state_ref[i], input_ref[i], self.trajectory.sampling_time)
 
-            A_temp = np.hstack((np.zeros((self._nx, i*self._nx)), A_d, -np.identity(
-                self._nx), np.zeros((self._nx, self._nx*(self._predict_step-i-1)))))
+            A_temp = np.hstack((np.zeros((self._nx, i*self._nx)), A_d, -np.identity(self._nx), np.zeros((self._nx, self._nx*(self._predict_step-i-1)))))
 
-            B_temp = np.hstack((i*np.zeros((self._nx, i*self._nu)), B_d,
-                               np.zeros((self._nx, self._nu*(self._predict_step-i-1)))))
+            B_temp = np.hstack((i*np.zeros((self._nx, i*self._nu)), B_d, np.zeros((self._nx, self._nu*(self._predict_step-i-1)))))
 
             A_eq_temp = np.hstack((A_temp, B_temp))
 
             A_eq = np.vstack((A_eq, A_eq_temp))
-
+        
         return A_eq, B_eq
 
-    def _get_nearest_waypoint(self, x, y, prev_idx):
+    # ==================================================================================================
+    # OTHERS METHODS
+    # ==================================================================================================
+ 
+    def _convert_degrees_to_radians(self, degrees):
+        """! Convert degrees to radians
+        @param degrees<float>: The angle in degrees
+        """
+        radians = degrees * (math.pi / 180)
+        
+        return radians
+    
+    def _diag_mat(self, mat1, mat2):
+
+        Z1 = np.zeros((mat1.shape[0],mat2.shape[1]))
+
+        Z2 = np.zeros((mat2.shape[0],mat1.shape[1]))
+        
+        out = np.asarray(np.bmat([[mat1, Z1], [Z2, mat2]]))
+
+        return out
+    
+    def _get_nearest_waypoint(self, x: float, y: float, prev_idx):
         """! Search the closest waypoint to the vehicle on the reference path
-        @param x<float>: The x-coordinate of the vehicle
-        @param y<float>: The y-coordinate of the vehicle
-        @param prev_idx<int>: The previous index
-        @return<int>: The index of the nearest waypoint
         """
 
         search_horizone_idx = prev_idx + self._predict_step
 
         dx = [x - ref_x for ref_x in self.trajectory.x[prev_idx:(prev_idx + search_horizone_idx), 0]]
-        
+
         dy = [y - ref_y for ref_y in self.trajectory.x[prev_idx:(prev_idx + search_horizone_idx), 1]]
 
         d = [idx ** 2 + idy ** 2 for (idx, idy) in zip(dx, dy)]
@@ -251,12 +255,11 @@ class LinearModelPredictiveControl:
 
         for i in range(self._predict_step):
 
-            new_state = self.model.function(
-                state, input, self.trajectory.sampling_time)
+            new_state = self.model.function(state, input, self.trajectory.sampling_time)
 
             state = new_state
 
-            x_out[i, :] = new_state
+            x_out[i,:] = new_state
 
         _, ax = plt.subplots(1, 1)
 
