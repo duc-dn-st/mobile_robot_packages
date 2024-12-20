@@ -22,7 +22,7 @@ class PurePursuit:
     autonomous driving.
     @note The controller is used to follow a trajectory.
     """
-    lookahead_distance = 0.3
+    lookahead_distance = 0.4
 
     lookahead_gain = 0.0
 
