@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 #
+# @file linear_mpc.py
+#
 # @brief Provide implementation of Linear Model Predictive Control (L-MPC) controller for
 # autonomous driving.
 #
@@ -8,10 +10,15 @@
 
 # Standard library
 import math
+
+# External library
 import numpy as np
-from scipy.linalg import block_diag
 import cvxpy as cp
+from scipy.linalg import block_diag
 import matplotlib.pyplot as plt
+
+# Internal library
+
 
 class LinearModelPredictiveControl:
     """! Linear Model Predictive Control (L-MPC) controller
@@ -57,7 +64,7 @@ class LinearModelPredictiveControl:
         status = True
 
         u_optimal = self._execute_mpc_control(state, input, index)
-        
+
         if self._debug:
             self._plot_solution(state, u_optimal, index)
 
@@ -66,7 +73,7 @@ class LinearModelPredictiveControl:
     # ==================================================================================================
     # PRIVATE METHODS
     # ==================================================================================================
- 
+
     def _execute_mpc_control(self, state, input, index):
         """! This function is used to calculate the control.
         @param state<list>: The state of the vehicle.
@@ -76,12 +83,13 @@ class LinearModelPredictiveControl:
         if index > len(self.trajectory.x) - self._predict_step:
             u = [0, 0]
         else:
-            problem, solution = self._set_optimization_problem(state, input, index)
+            problem, solution = self._set_optimization_problem(
+                state, input, index)
 
-            u = self.trajectory.u[index] + solution[0, :]    
+            u = self.trajectory.u[index] + solution[0, :]
 
         return u
-    
+
     def _set_optimization_problem(self, state, input, index):
         """! This function is used to set the optimization problem.
         @param state<list>: The state of the vehicle.
@@ -97,11 +105,11 @@ class LinearModelPredictiveControl:
 
         if current_idx > len(self.trajectory.x) - self._predict_step:
 
-            current_idx = len(self.trajectory.x) - self._predict_step
-        
-        state_ref = self.trajectory.x[current_idx:current_idx + self._predict_step]
+        state_ref = self.trajectory.x[current_idx:current_idx +
+                                      self._predict_step]
 
-        input_ref = self.trajectory.u[current_idx:current_idx + self._predict_step]
+        input_ref = self.trajectory.u[current_idx:current_idx +
+                                      self._predict_step]
 
         A_eq, B_eq = self._set_equality_constraints(state_ref, input_ref)
 
@@ -124,7 +132,7 @@ class LinearModelPredictiveControl:
         input_sol = z.value[self._nx*(self._predict_step+1):].reshape((self._predict_step, self._nu))
 
         return optimization_problem, input_sol
-    
+
     def _set_stage_cost(self):
         """! This function is used to calculate the cost function.
         @param state<list>: The state of the vehicle.
@@ -135,6 +143,7 @@ class LinearModelPredictiveControl:
 
         R = np.diag([0.001, 0.001])
         
+
         Q_stacked = block_diag(*([Q] * (self._predict_step+1)))
 
         R_stacked = block_diag(*([R] * self._predict_step))
@@ -225,6 +234,7 @@ class LinearModelPredictiveControl:
         search_horizone_idx = prev_idx + self._predict_step
 
         dx = [x - ref_x for ref_x in self.trajectory.x[prev_idx:(prev_idx + search_horizone_idx), 0]]
+
         dy = [y - ref_y for ref_y in self.trajectory.x[prev_idx:(prev_idx + search_horizone_idx), 1]]
 
         d = [idx ** 2 + idy ** 2 for (idx, idy) in zip(dx, dy)]
@@ -236,6 +246,10 @@ class LinearModelPredictiveControl:
 
     def _plot_solution(self, state, input, index):
         """! Plot the solution
+        @param state<list>: The state of the vehicle
+        @param input<list>: The input of the vehicle
+        @param index<int>: The index of the vehicle
+        @return None
         """
         x_out = np.zeros((self._predict_step, self._nx))
 
@@ -269,3 +283,29 @@ class LinearModelPredictiveControl:
         plt.tight_layout()
 
         plt.show()
+
+    # ==================================================================================================
+    # STATIC METHODS
+    # =================================================================================================
+    @staticmethod
+    def _convert_degrees_to_radians(degrees):
+        """! Convert degrees to radians
+        @param degrees<float>: The angle in degrees
+        """
+        radians = degrees * (math.pi / 180)
+
+        return radians
+
+    @staticmethod
+    def _diag_mat(mat1, mat2):
+        """! Create a block diagonal matrix
+        @param mat1<np.array>: The first matrix
+        @param mat2<np.array>: The second matrix
+        """
+        Z1 = np.zeros((mat1.shape[0], mat2.shape[1]))
+
+        Z2 = np.zeros((mat2.shape[0], mat1.shape[1]))
+
+        out = np.asarray(np.bmat([[mat1, Z1], [Z2, mat2]]))
+
+        return out
